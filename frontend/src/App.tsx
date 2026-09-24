@@ -9,6 +9,7 @@ import { UnmatchedPanel } from './components/UnmatchedPanel';
 import { ReviewModal } from './components/ReviewModal';
 import { AuditDatasetView } from './components/AuditDatasetView';
 import { SupportGuideModal } from './components/SupportGuideModal';
+import { DualPdfViewer } from './components/DualPdfViewer';
 import { api } from './services/api';
 import type { Comparison, ContentMatch, MatchClassification, Syllabus } from './types';
 
@@ -18,6 +19,7 @@ export const App: React.FC = () => {
   const [activeComparison, setActiveComparison] = useState<Comparison | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<ContentMatch | null>(null);
   const [reviewingMatch, setReviewingMatch] = useState<ContentMatch | null>(null);
+  const [pdfViewerMatch, setPdfViewerMatch] = useState<ContentMatch | null>(null);
   const [humanReviews, setHumanReviews] = useState<Record<string, MatchClassification>>({});
   const [loadingComparison, setLoadingComparison] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
@@ -109,6 +111,7 @@ export const App: React.FC = () => {
                     onClose={() => setSelectedMatch(null)}
                     onOpenReview={(m) => setReviewingMatch(m)}
                     humanReviewDecision={humanReviews[selectedMatch.id]}
+                    onOpenPdfViewer={(m) => setPdfViewerMatch(m)}
                   />
                 )}
 
@@ -117,6 +120,7 @@ export const App: React.FC = () => {
                   selectedMatchId={selectedMatch?.id}
                   onSelectMatch={(m) => setSelectedMatch(selectedMatch?.id === m.id ? null : m)}
                   humanReviews={humanReviews}
+                  onOpenPdfViewer={(m) => setPdfViewerMatch(m)}
                 />
 
                 <UnmatchedPanel
@@ -137,6 +141,20 @@ export const App: React.FC = () => {
 
         {currentTab === 'dataset' && <AuditDatasetView />}
       </main>
+
+      {/* Visor Pericial Doble PDF (Fase 1.5) */}
+      {pdfViewerMatch && activeComparison && (
+        <DualPdfViewer
+          comparison={activeComparison}
+          initialMatchId={pdfViewerMatch.id}
+          onClose={() => setPdfViewerMatch(null)}
+          onReviewSubmitted={() => {
+            // Refrescar lista de sílabos o datos si es necesario
+          }}
+          objectiveSyllabus={objSyllabus}
+          comparedSyllabus={cmpSyllabus}
+        />
+      )}
 
       {reviewingMatch && (
         <ReviewModal

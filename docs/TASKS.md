@@ -34,7 +34,13 @@
 | 11. Frontend: Resultados y Evidencias | Completado | 100% | 4 | 4 |
 | 12. Frontend: Revisión Humana | Completado | 100% | 4 | 4 |
 | 13. Pruebas Automatizadas y Validación | Completado | 100% | 4 | 4 |
-| **TOTAL GENERAL FASE 1** | **Completado** | **100%** | **49** | **49** |
+| **SUBTOTAL FASE 1.0** | **Completado** | **100%** | **49** | **49** |
+| 14. Fase 1.5: Extracción Espacial y Bounding Boxes | Completado | 100% | 4 | 4 |
+| 15. Fase 1.5: API de PDF y Consulta de Evidencias | Completado | 100% | 3 | 3 |
+| 16. Fase 1.5: Frontend — Visor Doble y EvidenceOverlay | Completado | 100% | 4 | 4 |
+| 17. Fase 1.5: Frontend — Navegación Sincronizada y Revisión | Completado | 100% | 4 | 4 |
+| 18. Fase 1.5: Evidencias en Reportes y Pruebas E2E | Pendiente | 0% | 0 | 2 |
+| **TOTAL GENERAL (FASE 1.0 + FASE 1.5)** | **En Progreso** | **97%** | **64** | **66** |
 
 ---
 
@@ -142,6 +148,47 @@
 - [x] **TASK-13.2:** Pruebas unitarias de algoritmos de similitud, scoring y ranking con `pytest`. *(Completado el 2026-09-24)*
 - [x] **TASK-13.3:** Pruebas de integración extremo a extremo del flujo API: Carga $\rightarrow$ Comparación $\rightarrow$ Reporte $\rightarrow$ Revisión (`test_e2e_flow.py`). *(Completado el 2026-09-24)*
 - [x] **TASK-13.4:** Verificación y validación de los criterios de aceptación formales de la Fase 1 (`README.md` y suite completa de 28 tests). *(Completado el 2026-09-24)*
+
+---
+
+## Desglose Granular de Tareas — Fase 1.5: Visualización y Trazabilidad en PDF
+
+### Paquete 14: Extracción Espacial y Bounding Boxes (Backend)
+- [x] **TASK-14.1:** Extender `PyMuPdfExtractor` para registrar dimensiones de página (`page_width`, `page_height`) y extraer bloques textuales con coordenadas `(x0, y0, x1, y1)`. *(Completado el 2026-09-24)*
+- [x] **TASK-14.2:** Implementar entidad de dominio inmutable `EvidenceRegion` y servicio de búsqueda y mapeo espacial de fragmentos de evidencia (`page.search_for` en `SpatialLocatorService`). *(Completado el 2026-09-24)*
+- [x] **TASK-14.3:** Actualizar `CompareSyllabiUseCase` y contratos de persistencia para asociar arreglos de regiones espaciales (`objective_evidence` y `compared_evidence`) a cada `ContentMatch`. *(Completado el 2026-09-24)*
+- [x] **TASK-14.4:** Pruebas unitarias para extracción de coordenadas y validación de bounding boxes de evidencia (`test_spatial_locator.py`). *(Completado el 2026-09-24)*
+
+---
+
+### Paquete 15: API de PDF y Consulta de Evidencias (Backend)
+- [x] **TASK-15.1:** Implementar endpoint para streaming del archivo PDF original de un sílabo (`GET /api/syllabi/{id}/pdf`). *(Completado el 2026-09-24)*
+- [x] **TASK-15.2:** Implementar endpoint para consulta de evidencias espaciales con coordenadas y dimensiones (`GET /api/comparisons/{id}/evidence` y detalle por match). *(Completado el 2026-09-24)*
+- [x] **TASK-15.3:** Pruebas de integración para endpoint de streaming binario de PDF y serialización de regiones de evidencia (`test_fase1_5_endpoints.py`). *(Completado el 2026-09-24)*
+
+---
+
+### Paquete 16: Frontend — Visor Doble y Capa de Evidencia (EvidenceOverlay)
+- [x] **TASK-16.1:** Configurar cliente de renderizado de PDF en React (`pdfjs-dist` con worker local en `pdfSetup.ts`) con escalado responsivo. *(Completado el 2026-09-24)*
+- [x] **TASK-16.2:** Implementar componente de visor unitario `PdfDocumentViewer.tsx` con controles de zoom (Ajustar a ancho, Ajustar a página, 100%, 150%) y navegación de páginas. *(Completado el 2026-09-24)*
+- [x] **TASK-16.3:** Implementar componente de superposición visual no destructiva `EvidenceOverlay.tsx` para dibujar cuadros delimitadores con estados (`MATCH`, `PARTIAL_MATCH`, `UNCERTAIN`, `NO_MATCH`) y aristas ortogonales de 90° (`0px`). *(Completado el 2026-09-24)*
+- [x] **TASK-16.4:** Implementar contenedor principal `DualPdfViewer.tsx` mostrando el sílabo requerido (izquierda) y el comparado (derecha) simultáneamente. *(Completado el 2026-09-24)*
+
+---
+
+### Paquete 17: Frontend — Navegación Sincronizada y Revisión desde Visor
+- [x] **TASK-17.1:** Implementar barra de control `EvidenceNavigator.tsx` con botones Anterior / Siguiente, contador de evidencia (`Correspondencia X de Y`), atajos de teclado y score. *(Completado el 2026-09-24)*
+- [x] **TASK-17.2:** Implementar sincronización automática bidireccional: al seleccionar una correspondencia, ambos visores saltan a sus páginas y centran la evidencia. *(Completado el 2026-09-24)*
+- [x] **TASK-17.3:** Implementar panel de dictamen docente al pie del visor (`ViewerReviewPanel.tsx`) para ratificar, ajustar o marcar dudoso (`? REVISAR`) con justificación inmutable. *(Completado el 2026-09-24)*
+- [x] **TASK-17.4:** Integrar botón de apertura del visor doble desde la matriz de correspondencias (`MatchTable.tsx`) y la ficha técnica (`EvidencePanel.tsx`). *(Completado el 2026-09-24)*
+
+---
+
+### Paquete 18: Evidencias en Reportes y Validación E2E de Fase 1.5
+- [ ] **TASK-18.1:** Extender el generador de reportes PDF formal para incorporar referencias de coordenadas y trazabilidad espacial de evidencias.
+- [ ] **TASK-18.2:** Pruebas automatizadas de extremo a extremo cubriendo el flujo completo de la Fase 1.5: Carga $\rightarrow$ Comparación $\rightarrow$ Visor Doble $\rightarrow$ Coordenadas $\rightarrow$ Revisión.
+
+---
 
 ---
 
@@ -445,6 +492,58 @@
 - **Resultados de Validación:**
   - Compilación exitosa del frontend con `tsc -b && vite build` (0 errores, `built in 92ms`).
   - Grabación y capturas de pantalla de verificación archivadas en los artefactos del sistema.
+
+---
+
+### Sesión 12 — 2026-09-24
+- **Objetivos de la sesión:**
+  - Analizar a profundidad los requerimientos de la **Fase 1.5 — Visualización y Trazabilidad de Evidencias en los PDF** (Capítulo 97 a 99 del planteamiento institucional).
+  - Diseñar y formalizar la arquitectura técnica y el documento de flujo para la Fase 1.5 ([docs/FLUJO_FASE_1_5.md](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/docs/FLUJO_FASE_1_5.md)).
+  - Crear la nueva rama de trabajo en Git: `feature/fase1_5`.
+  - Estructurar el desglose granular de tareas en 5 paquetes de trabajo (Paquetes 14 a 18) en `docs/TASKS.md`.
+  - Definir la estrategia de extracción espacial de coordenadas (`x0, y0, x1, y1`) con PyMuPDF sin alterar los PDFs originales, la API de servido de PDFs y el diseño del Visor Doble interactivo con `EvidenceOverlay`.
+- **Tareas completadas:**
+  - Análisis exhaustivo de los 25 apartados de la Fase 1.5 en [PLANTEAMIENTO_IMPLEMENTACION_COMPARACION_SILABOS.md](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/docs/PLANTEAMIENTO_IMPLEMENTACION_COMPARACION_SILABOS.md).
+  - Elaboración y formalización de [docs/FLUJO_FASE_1_5.md](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/docs/FLUJO_FASE_1_5.md).
+  - Incorporación de los paquetes de trabajo 14 al 18 en `docs/TASKS.md` elevando el alcance global del proyecto a 66 tareas controladas.
+- **Decisiones técnicas adoptadas:**
+  - Principio de No Destructividad: El PDF original nunca es intervenido en el servidor; los cuadros delimitadores se dibujan en una capa vectorial/HTML superpuesta en el cliente (`EvidenceOverlay`).
+  - Extracción con PyMuPDF (`fitz`): se conservarán las dimensiones de página (`page_width`, `page_height`) y las coordenadas exactas de bloques y palabras clave (`search_for`).
+  - El Visor Doble (`DualPdfViewer`) incorporará navegación sincronizada automática, zoom no deformable y panel de dictamen humano directo para casos confirmados y dudosos (`? REVISAR`).
+- **Próximas tareas a iniciar:**
+  - Paquete 14: Extracción Espacial y Bounding Boxes (`TASK-14.1` a `TASK-14.4`).
+  - Paquete 15: API de PDF y Consulta de Evidencias (`TASK-15.1` a `TASK-15.3`).
+
+---
+
+### Sesión 13 — 2026-09-24
+- **Objetivos de la sesión:**
+  - Implementar de extremo a extremo la **Fase 1.5: Visualización y Trazabilidad de Evidencias en los PDF** (Paquetes 14, 15, 16 y 17).
+  - Conservar estrictamente el algoritmo matemático, ponderaciones y scoring de la Fase 1.0.
+  - Implementar el servicio `SpatialLocatorService` en PyMuPDF para extraer dimensiones de página y recuadros delimitadores (`x0, y0, x1, y1`) basados en títulos, fragmentos textuales y palabras clave coincidentes.
+  - Actualizar persistencia en SQLite (`content_matches.evidence_regions_json`) y orquestador `CompareSyllabiUseCase`.
+  - Crear endpoints REST:
+    - `GET /api/syllabi/{id}/pdf` para streaming no destructivo del PDF original.
+    - `GET /api/comparisons/{id}/evidence` para consulta estructurada de coordenadas.
+    - `GET /api/comparisons/{id}/matches/{match_id}/evidence` para detalle espacial por correspondencia.
+  - Configurar `pdfjs-dist` en el frontend y construir los componentes:
+    - `EvidenceOverlay.tsx` (capa SVG/HTML de alta precisión con esquinas a 90° sin bordes redondeados).
+    - `PdfDocumentViewer.tsx` (visor individual con zoom al ancho, a la página, 100%, 150% y navegación de páginas).
+    - `EvidenceNavigator.tsx` (barra de avance secuencial con atajos de teclado `←` / `→` e indicadores de score).
+    - `ViewerReviewPanel.tsx` (panel de dictamen rápido para ratificar match, ajustar a parcial, marcar dudoso `? REVISAR` o descartar).
+    - `DualPdfViewer.tsx` (visor doble pericial interactivo a pantalla completa).
+  - Integrar el botón "Visor PDF" en `MatchTable.tsx` y `EvidencePanel.tsx`.
+- **Tareas completadas:**
+  - Paquete 14 completado al 100% (`TASK-14.1` a `TASK-14.4`).
+  - Paquete 15 completado al 100% (`TASK-15.1` a `TASK-15.3`).
+  - Paquete 16 completado al 100% (`TASK-16.1` a `TASK-16.4`).
+  - Paquete 17 completado al 100% (`TASK-17.1` a `TASK-17.4`).
+- **Resultados de Validación:**
+  - Suite completa de 32 pruebas automatizadas en backend (`pytest tests/`) ejecutadas con 100% de éxito.
+  - Compilación de producción en frontend (`npm run build`) completada con 0 errores de tipado.
+  - Verificación visual automatizada en navegador con subagente (`browser_subagent`) validando apertura de visor doble, renderizado de páginas simultáneas, cuadros delimitadores ortogonales y sincronización con flechas de avance.
+
+
 
 
 

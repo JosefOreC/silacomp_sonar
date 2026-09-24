@@ -7,6 +7,7 @@ interface EvidencePanelProps {
   onClose: () => void;
   onOpenReview: (match: ContentMatch) => void;
   humanReviewDecision?: string;
+  onOpenPdfViewer?: (match: ContentMatch) => void;
 }
 
 export const EvidencePanel: React.FC<EvidencePanelProps> = ({
@@ -14,6 +15,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   onClose,
   onOpenReview,
   humanReviewDecision,
+  onOpenPdfViewer,
 }) => {
   const { score_breakdown, evidence } = match;
   const classInfo = CLASSIFICATIONS_ES[match.classification] || {
@@ -61,6 +63,14 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         </div>
 
         <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => onOpenPdfViewer?.(match)}
+            className="btn btn-secondary"
+            style={{ fontSize: '12px', padding: '6px 14px', border: '1px solid #10b981', color: '#10b981', fontWeight: 600 }}
+            title="Abrir ambos sílabos en el Visor Pericial Doble PDF con resaltado espacial (Fase 1.5)"
+          >
+            Ver en Visor PDF
+          </button>
           <button
             onClick={() => onOpenReview(match)}
             className="btn btn-primary"

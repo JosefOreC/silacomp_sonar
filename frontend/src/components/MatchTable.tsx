@@ -7,6 +7,7 @@ interface MatchTableProps {
   selectedMatchId?: string;
   onSelectMatch: (match: ContentMatch) => void;
   humanReviews: Record<string, string>; // match_id -> human_decision
+  onOpenPdfViewer?: (match: ContentMatch) => void;
 }
 
 export const MatchTable: React.FC<MatchTableProps> = ({
@@ -14,6 +15,7 @@ export const MatchTable: React.FC<MatchTableProps> = ({
   selectedMatchId,
   onSelectMatch,
   humanReviews,
+  onOpenPdfViewer,
 }) => {
   const [filter, setFilter] = useState<'ALL' | MatchClassification>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
@@ -223,16 +225,30 @@ export const MatchTable: React.FC<MatchTableProps> = ({
                       )}
                     </td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectMatch(m);
-                        }}
-                        className="btn btn-secondary"
-                        style={{ fontSize: '11px', padding: '4px 8px' }}
-                      >
-                        {isSelected ? 'Cerrar' : 'Examinar'}
-                      </button>
+                      <div style={{ display: 'inline-flex', gap: '4px' }}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectMatch(m);
+                          }}
+                          className="btn btn-secondary"
+                          style={{ fontSize: '11px', padding: '4px 8px' }}
+                        >
+                          {isSelected ? 'Cerrar' : 'Examinar'}
+                        </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenPdfViewer?.(m);
+                          }}
+                          className="btn btn-primary"
+                          style={{ fontSize: '11px', padding: '4px 8px' }}
+                          title="Abrir en Visor Pericial Doble PDF (Fase 1.5)"
+                        >
+                          Visor PDF
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

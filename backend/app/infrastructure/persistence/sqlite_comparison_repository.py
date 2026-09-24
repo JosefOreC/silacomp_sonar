@@ -9,6 +9,7 @@ from typing import List, Optional
 from app.domain.comparison import (
     Comparison,
     ContentMatch,
+    EvidenceRegion,
     MatchClassification,
     MatchEvidence,
     ScoreBreakdown,
@@ -57,6 +58,45 @@ class SqliteComparisonRepository(IComparisonRepository):
             # Insertar matches
             cursor.execute("DELETE FROM content_matches WHERE comparison_id = ?;", (comparison.id,))
             for m in comparison.matches:
+                regions_data = {
+                    "objective": [
+                        {
+                            "id": r.id,
+                            "match_id": r.match_id,
+                            "syllabus_id": r.syllabus_id,
+                            "content_id": r.content_id,
+                            "page_number": r.page_number,
+                            "page_width": r.page_width,
+                            "page_height": r.page_height,
+                            "x0": r.x0,
+                            "y0": r.y0,
+                            "x1": r.x1,
+                            "y1": r.y1,
+                            "text": r.text,
+                            "evidence_type": r.evidence_type,
+                        }
+                        for r in (getattr(m.evidence, "objective_regions", None) or [])
+                    ],
+                    "compared": [
+                        {
+                            "id": r.id,
+                            "match_id": r.match_id,
+                            "syllabus_id": r.syllabus_id,
+                            "content_id": r.content_id,
+                            "page_number": r.page_number,
+                            "page_width": r.page_width,
+                            "page_height": r.page_height,
+                            "x0": r.x0,
+                            "y0": r.y0,
+                            "x1": r.x1,
+                            "y1": r.y1,
+                            "text": r.text,
+                            "evidence_type": r.evidence_type,
+                        }
+                        for r in (getattr(m.evidence, "compared_regions", None) or [])
+                    ],
+                }
+
                 cursor.execute(
                     """
                     INSERT INTO content_matches (
@@ -65,8 +105,8 @@ class SqliteComparisonRepository(IComparisonRepository):
                         objective_page, compared_page, semantic_sim, lexical_sim,
                         keyword_overlap, structural_sim, composite_score,
                         classification, evidence_type, shared_keywords_json,
-                        objective_snippet, compared_snippet
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                        objective_snippet, compared_snippet, evidence_regions_json
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                     """,
                     (
                         m.id,
@@ -89,6 +129,7 @@ class SqliteComparisonRepository(IComparisonRepository):
                         json.dumps(m.evidence.shared_keywords, ensure_ascii=False),
                         m.evidence.objective_snippet,
                         m.evidence.compared_snippet,
+                        json.dumps(regions_data, ensure_ascii=False),
                     ),
                 )
 
@@ -154,40 +195,57 @@ class SqliteComparisonRepository(IComparisonRepository):
             # Recuperar matches
             cursor.execute("SELECT * FROM content_matches WHERE comparison_id = ? ORDER BY composite_score DESC;", (comparison_id,))
             match_rows = cursor.fetchall()
-            matches = [
-                ContentMatch(
-                    id=m["id"],
-                    comparison_id=m["comparison_id"],
-                    objective_item_id=m["objective_item_id"],
-                    compared_item_id=m["compared_item_id"],
-                    objective_title=m["objective_title"],
-                    compared_title=m["compared_title"],
-                    objective_section=m["objective_section"],
-                    compared_section=m["compared_section"],
-                    objective_page=m["objective_page"],
-                    compared_page=m["compared_page"],
-                    score_breakdown=ScoreBreakdown(
-                        semantic_similarity=m["semantic_sim"],
-                        lexical_similarity=m["lexical_sim"],
-                        keyword_overlap=m["keyword_overlap"],
-                        structural_similarity=m["structural_sim"],
-                        composite_score=m["composite_score"],
-                        weights={"semantic": 0.40, "lexical": 0.30, "keyword": 0.15, "structural": 0.15},
-                    ),
-                    classification=MatchClassification(m["classification"]),
-                    evidence=MatchEvidence(
-                        evidence_type=m["evidence_type"],
-                        shared_keywords=json.loads(m["shared_keywords_json"]),
-                        semantic_score=m["semantic_sim"],
-                        lexical_score=m["lexical_sim"],
-                        objective_snippet=m["objective_snippet"],
-                        compared_snippet=m["compared_snippet"],
+            matches = []
+            for m in match_rows:
+                obj_regions: List[EvidenceRegion] = []
+                cmp_regions: List[EvidenceRegion] = []
+                raw_regions = m["evidence_regions_json"] if "evidence_regions_json" in m.keys() else None
+                if raw_regions:
+                    try:
+                        r_data = json.loads(raw_regions)
+                        if isinstance(r_data, dict):
+                            for r in r_data.get("objective", []):
+                                obj_regions.append(EvidenceRegion(**r))
+                            for r in r_data.get("compared", []):
+                                cmp_regions.append(EvidenceRegion(**r))
+                    except Exception:
+                        pass
+
+                matches.append(
+                    ContentMatch(
+                        id=m["id"],
+                        comparison_id=m["comparison_id"],
+                        objective_item_id=m["objective_item_id"],
+                        compared_item_id=m["compared_item_id"],
+                        objective_title=m["objective_title"],
+                        compared_title=m["compared_title"],
+                        objective_section=m["objective_section"],
+                        compared_section=m["compared_section"],
                         objective_page=m["objective_page"],
                         compared_page=m["compared_page"],
-                    ),
+                        score_breakdown=ScoreBreakdown(
+                            semantic_similarity=m["semantic_sim"],
+                            lexical_similarity=m["lexical_sim"],
+                            keyword_overlap=m["keyword_overlap"],
+                            structural_similarity=m["structural_sim"],
+                            composite_score=m["composite_score"],
+                            weights={"semantic": 0.40, "lexical": 0.30, "keyword": 0.15, "structural": 0.15},
+                        ),
+                        classification=MatchClassification(m["classification"]),
+                        evidence=MatchEvidence(
+                            evidence_type=m["evidence_type"],
+                            shared_keywords=json.loads(m["shared_keywords_json"]),
+                            semantic_score=m["semantic_sim"],
+                            lexical_score=m["lexical_sim"],
+                            objective_snippet=m["objective_snippet"],
+                            compared_snippet=m["compared_snippet"],
+                            objective_page=m["objective_page"],
+                            compared_page=m["compared_page"],
+                            objective_regions=obj_regions,
+                            compared_regions=cmp_regions,
+                        ),
+                    )
                 )
-                for m in match_rows
-            ]
 
             # Recuperar unmatched
             cursor.execute("SELECT * FROM unmatched_items WHERE comparison_id = ?;", (comparison_id,))

@@ -6,6 +6,7 @@ import os
 from typing import List, Optional
 import uuid
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi.responses import FileResponse
 
 from app.api.deps import (
     get_syllabus_extractor,
@@ -160,3 +161,31 @@ def get_syllabus_items(syllabus_id: str, repo: SqliteSyllabusRepository = Depend
         )
         for it in items
     ]
+
+
+@router.get("/{syllabus_id}/pdf")
+def get_syllabus_pdf(
+    syllabus_id: str,
+    repo: SqliteSyllabusRepository = Depends(get_syllabus_repository),
+):
+    """
+    Retorna el flujo binario del archivo PDF original para visualización no destructiva en el frontend.
+    """
+    s = repo.get_by_id(syllabus_id)
+    if not s:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sílabo no encontrado.")
+    if not os.path.exists(s.file_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="El archivo PDF original no existe en el almacenamiento del servidor.",
+        )
+    return FileResponse(
+        s.file_path,
+        media_type="application/pdf",
+        filename=s.filename,
+        headers={
+            "Content-Disposition": f'inline; filename="{s.filename}"',
+            "Cache-Control": "public, max-age=3600",
+        },
+    )
+

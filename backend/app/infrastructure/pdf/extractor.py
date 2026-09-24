@@ -74,11 +74,14 @@ class PyMuPdfExtractor(ISyllabusExtractor):
                 char_count = len(cleaned_text)
                 total_extracted_characters += char_count
 
+                rect = page.rect
                 pages.append(
                     SyllabusPage(
                         page_number=page_index + 1,
                         raw_text=cleaned_text,
                         character_count=char_count,
+                        page_width=float(rect.width),
+                        page_height=float(rect.height),
                     )
                 )
         finally:

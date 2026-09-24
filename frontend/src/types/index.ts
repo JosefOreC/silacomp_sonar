@@ -22,6 +22,22 @@ export interface ScoreBreakdown {
   weights: Record<string, number>;
 }
 
+export interface EvidenceRegion {
+  id: string;
+  match_id: string;
+  syllabus_id: string;
+  content_id: string;
+  page_number: number;
+  page_width: number;
+  page_height: number;
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  text: string;
+  evidence_type: string;
+}
+
 export interface MatchEvidence {
   evidence_type: 'LEXICAL' | 'SEMANTIC' | 'HYBRID';
   shared_keywords: string[];
@@ -31,6 +47,26 @@ export interface MatchEvidence {
   compared_snippet: string;
   objective_page: number;
   compared_page: number;
+  objective_regions?: EvidenceRegion[];
+  compared_regions?: EvidenceRegion[];
+}
+
+export interface MatchSpatialEvidence {
+  match_id: string;
+  composite_score: number;
+  classification: MatchClassification;
+  objective_title: string;
+  compared_title: string;
+  objective_page: number;
+  compared_page: number;
+  objective_regions: EvidenceRegion[];
+  compared_regions: EvidenceRegion[];
+}
+
+export interface ComparisonEvidenceCatalog {
+  comparison_id: string;
+  total_matches: number;
+  evidence_items: MatchSpatialEvidence[];
 }
 
 export interface ContentMatch {

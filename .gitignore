@@ -436,3 +436,11 @@ Temporary Items
 .apdisk
 
 # End of https://www.toptal.com/developers/gitignore/api/python,react,reactnative
+
+# Application runtime data
+data/uploads/*
+!data/uploads/.gitkeep
+data/reports/*
+!data/reports/.gitkeep
+*.db
+backend/data/*.db

@@ -55,6 +55,22 @@ class ScoreBreakdownResponse(BaseModel):
     weights: Dict[str, float]
 
 
+class EvidenceRegionResponse(BaseModel):
+    id: str
+    match_id: str
+    syllabus_id: str
+    content_id: str
+    page_number: int
+    page_width: float
+    page_height: float
+    x0: float
+    y0: float
+    x1: float
+    y1: float
+    text: str
+    evidence_type: str = "COMBINED"
+
+
 class MatchEvidenceResponse(BaseModel):
     evidence_type: str
     shared_keywords: List[str]
@@ -64,6 +80,26 @@ class MatchEvidenceResponse(BaseModel):
     compared_snippet: str
     objective_page: int
     compared_page: int
+    objective_regions: List[EvidenceRegionResponse] = Field(default_factory=list)
+    compared_regions: List[EvidenceRegionResponse] = Field(default_factory=list)
+
+
+class MatchSpatialEvidenceResponse(BaseModel):
+    match_id: str
+    composite_score: float
+    classification: MatchClassification
+    objective_title: str
+    compared_title: str
+    objective_page: int
+    compared_page: int
+    objective_regions: List[EvidenceRegionResponse] = Field(default_factory=list)
+    compared_regions: List[EvidenceRegionResponse] = Field(default_factory=list)
+
+
+class ComparisonEvidenceCatalogResponse(BaseModel):
+    comparison_id: str
+    total_matches: int
+    evidence_items: List[MatchSpatialEvidenceResponse]
 
 
 class ContentMatchResponse(BaseModel):

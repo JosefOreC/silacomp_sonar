@@ -2,7 +2,14 @@
  * Servicio de comunicación con la API REST de ConvComp.
  */
 
-import type { Comparison, HumanReviewPayload, HumanReviewResponse, Syllabus } from '../types';
+import type {
+  Comparison,
+  ComparisonEvidenceCatalog,
+  HumanReviewPayload,
+  HumanReviewResponse,
+  MatchSpatialEvidence,
+  Syllabus,
+} from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
@@ -126,4 +133,30 @@ export const api = {
   getDatasetExportUrl(): string {
     return `${API_BASE_URL}/dataset/export`;
   },
+
+  /**
+   * Retorna la URL del archivo PDF original de un sílabo para visualización.
+   */
+  getSyllabusPdfUrl(syllabusId: string): string {
+    return `${API_BASE_URL}/syllabi/${syllabusId}/pdf`;
+  },
+
+  /**
+   * Obtiene el catálogo completo de evidencias espaciales de una comparación.
+   */
+  async getComparisonEvidence(comparisonId: string): Promise<ComparisonEvidenceCatalog> {
+    const res = await fetch(`${API_BASE_URL}/comparisons/${comparisonId}/evidence`);
+    if (!res.ok) throw new Error('Error al obtener catálogo de evidencias');
+    return res.json();
+  },
+
+  /**
+   * Obtiene el detalle de evidencias de una correspondencia específica.
+   */
+  async getMatchEvidence(comparisonId: string, matchId: string): Promise<MatchSpatialEvidence> {
+    const res = await fetch(`${API_BASE_URL}/comparisons/${comparisonId}/matches/${matchId}/evidence`);
+    if (!res.ok) throw new Error('Error al obtener evidencia de la correspondencia');
+    return res.json();
+  },
 };
+

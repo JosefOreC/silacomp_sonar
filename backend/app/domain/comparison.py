@@ -32,6 +32,32 @@ class ScoreBreakdown:
                 raise ValueError(f"Los componentes de score deben estar en el rango [0.0, 1.0], recibido: {val}")
 
 
+class EvidenceType(str, Enum):
+    """Tipos de evidencia formal para la Fase 1.5."""
+    LEXICAL = "LEXICAL"
+    SEMANTIC = "SEMANTIC"
+    STRUCTURAL = "STRUCTURAL"
+    COMBINED = "COMBINED"
+
+
+@dataclass(frozen=True)
+class EvidenceRegion:
+    """Región espacial delimitada (bounding box) dentro de una página de un sílabo PDF."""
+    id: str
+    match_id: str
+    syllabus_id: str
+    content_id: str
+    page_number: int
+    page_width: float
+    page_height: float
+    x0: float
+    y0: float
+    x1: float
+    y1: float
+    text: str
+    evidence_type: str = "COMBINED"
+
+
 @dataclass(frozen=True)
 class MatchEvidence:
     """Evidencia verificable y observable que sustenta una correspondencia."""
@@ -43,6 +69,8 @@ class MatchEvidence:
     compared_snippet: str
     objective_page: int
     compared_page: int
+    objective_regions: List[EvidenceRegion] = field(default_factory=list)
+    compared_regions: List[EvidenceRegion] = field(default_factory=list)
 
 
 @dataclass

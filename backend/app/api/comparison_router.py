@@ -14,10 +14,13 @@ from app.api.deps import (
 from app.infrastructure.reports.html_report_generator import HtmlReportGenerator
 from app.infrastructure.reports.pdf_report_generator import PdfReportGenerator
 from app.api.schemas import (
+    ComparisonEvidenceCatalogResponse,
     ComparisonResponse,
     ContentMatchResponse,
     CreateComparisonRequest,
+    EvidenceRegionResponse,
     MatchEvidenceResponse,
+    MatchSpatialEvidenceResponse,
     ScoreBreakdownResponse,
     UnmatchedItemResponse,
 )
@@ -60,6 +63,42 @@ def _map_match_to_response(m: ContentMatch) -> ContentMatchResponse:
             compared_snippet=m.evidence.compared_snippet,
             objective_page=m.evidence.objective_page,
             compared_page=m.evidence.compared_page,
+            objective_regions=[
+                EvidenceRegionResponse(
+                    id=r.id,
+                    match_id=r.match_id,
+                    syllabus_id=r.syllabus_id,
+                    content_id=r.content_id,
+                    page_number=r.page_number,
+                    page_width=r.page_width,
+                    page_height=r.page_height,
+                    x0=r.x0,
+                    y0=r.y0,
+                    x1=r.x1,
+                    y1=r.y1,
+                    text=r.text,
+                    evidence_type=r.evidence_type,
+                )
+                for r in (getattr(m.evidence, "objective_regions", None) or [])
+            ],
+            compared_regions=[
+                EvidenceRegionResponse(
+                    id=r.id,
+                    match_id=r.match_id,
+                    syllabus_id=r.syllabus_id,
+                    content_id=r.content_id,
+                    page_number=r.page_number,
+                    page_width=r.page_width,
+                    page_height=r.page_height,
+                    x0=r.x0,
+                    y0=r.y0,
+                    x1=r.x1,
+                    y1=r.y1,
+                    text=r.text,
+                    evidence_type=r.evidence_type,
+                )
+                for r in (getattr(m.evidence, "compared_regions", None) or [])
+            ],
         ),
     )
 
@@ -146,6 +185,8 @@ def create_comparison(
         compared_items=cmp_items,
         weights=payload.weights,
         thresholds=payload.thresholds,
+        objective_pdf_path=obj_syl.file_path,
+        compared_pdf_path=cmp_syl.file_path,
     )
 
     return _map_comparison_to_response(comparison)
@@ -201,6 +242,144 @@ def get_comparison_matches(
     if not comp:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comparación no encontrada.")
     return [_map_match_to_response(m) for m in comp.matches]
+
+
+@router.get("/{comparison_id}/evidence", response_model=ComparisonEvidenceCatalogResponse)
+def get_comparison_evidence(
+    comparison_id: str,
+    comp_repo: SqliteComparisonRepository = Depends(get_comparison_repository),
+) -> ComparisonEvidenceCatalogResponse:
+    """
+    Retorna el catálogo completo de evidencias y coordenadas espaciales vinculadas a cada correspondencia.
+    """
+    comp = comp_repo.get_by_id(comparison_id)
+    if not comp:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comparación no encontrada.")
+
+    items = []
+    for m in comp.matches:
+        obj_regs = [
+            EvidenceRegionResponse(
+                id=r.id,
+                match_id=r.match_id,
+                syllabus_id=r.syllabus_id,
+                content_id=r.content_id,
+                page_number=r.page_number,
+                page_width=r.page_width,
+                page_height=r.page_height,
+                x0=r.x0,
+                y0=r.y0,
+                x1=r.x1,
+                y1=r.y1,
+                text=r.text,
+                evidence_type=r.evidence_type,
+            )
+            for r in (getattr(m.evidence, "objective_regions", None) or [])
+        ]
+        cmp_regs = [
+            EvidenceRegionResponse(
+                id=r.id,
+                match_id=r.match_id,
+                syllabus_id=r.syllabus_id,
+                content_id=r.content_id,
+                page_number=r.page_number,
+                page_width=r.page_width,
+                page_height=r.page_height,
+                x0=r.x0,
+                y0=r.y0,
+                x1=r.x1,
+                y1=r.y1,
+                text=r.text,
+                evidence_type=r.evidence_type,
+            )
+            for r in (getattr(m.evidence, "compared_regions", None) or [])
+        ]
+        items.append(
+            MatchSpatialEvidenceResponse(
+                match_id=m.id,
+                composite_score=m.score_breakdown.composite_score,
+                classification=m.classification,
+                objective_title=m.objective_title,
+                compared_title=m.compared_title,
+                objective_page=m.objective_page,
+                compared_page=m.compared_page,
+                objective_regions=obj_regs,
+                compared_regions=cmp_regs,
+            )
+        )
+
+    return ComparisonEvidenceCatalogResponse(
+        comparison_id=comp.id,
+        total_matches=len(items),
+        evidence_items=items,
+    )
+
+
+@router.get("/{comparison_id}/matches/{match_id}/evidence", response_model=MatchSpatialEvidenceResponse)
+def get_match_evidence_detail(
+    comparison_id: str,
+    match_id: str,
+    comp_repo: SqliteComparisonRepository = Depends(get_comparison_repository),
+) -> MatchSpatialEvidenceResponse:
+    """
+    Retorna el detalle espacial unitario de las evidencias de una correspondencia.
+    """
+    comp = comp_repo.get_by_id(comparison_id)
+    if not comp:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comparación no encontrada.")
+
+    target_match = next((m for m in comp.matches if m.id == match_id), None)
+    if not target_match:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Correspondencia no encontrada.")
+
+    obj_regs = [
+        EvidenceRegionResponse(
+            id=r.id,
+            match_id=r.match_id,
+            syllabus_id=r.syllabus_id,
+            content_id=r.content_id,
+            page_number=r.page_number,
+            page_width=r.page_width,
+            page_height=r.page_height,
+            x0=r.x0,
+            y0=r.y0,
+            x1=r.x1,
+            y1=r.y1,
+            text=r.text,
+            evidence_type=r.evidence_type,
+        )
+        for r in (getattr(target_match.evidence, "objective_regions", None) or [])
+    ]
+    cmp_regs = [
+        EvidenceRegionResponse(
+            id=r.id,
+            match_id=r.match_id,
+            syllabus_id=r.syllabus_id,
+            content_id=r.content_id,
+            page_number=r.page_number,
+            page_width=r.page_width,
+            page_height=r.page_height,
+            x0=r.x0,
+            y0=r.y0,
+            x1=r.x1,
+            y1=r.y1,
+            text=r.text,
+            evidence_type=r.evidence_type,
+        )
+        for r in (getattr(target_match.evidence, "compared_regions", None) or [])
+    ]
+
+    return MatchSpatialEvidenceResponse(
+        match_id=target_match.id,
+        composite_score=target_match.score_breakdown.composite_score,
+        classification=target_match.classification,
+        objective_title=target_match.objective_title,
+        compared_title=target_match.compared_title,
+        objective_page=target_match.objective_page,
+        compared_page=target_match.compared_page,
+        objective_regions=obj_regs,
+        compared_regions=cmp_regs,
+    )
 
 
 @router.get("/{comparison_id}/unmatched", response_model=Dict[str, List[UnmatchedItemResponse]])

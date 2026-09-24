@@ -28,6 +28,8 @@ class SyllabusPage:
     page_number: int  # 1-indexed
     raw_text: str
     character_count: int
+    page_width: float = 0.0
+    page_height: float = 0.0
 
     def __post_init__(self) -> None:
         if self.page_number < 1:

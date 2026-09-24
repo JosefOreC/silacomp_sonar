@@ -130,9 +130,17 @@ class DatabaseManager:
                 shared_keywords_json TEXT NOT NULL,
                 objective_snippet TEXT NOT NULL,
                 compared_snippet TEXT NOT NULL,
+                evidence_regions_json TEXT,
                 FOREIGN KEY (comparison_id) REFERENCES comparisons(id) ON DELETE CASCADE
             );
             """)
+
+            # Migraciones no destructivas para Fase 1.5
+            try:
+                cursor.execute("ALTER TABLE content_matches ADD COLUMN evidence_regions_json TEXT;")
+            except sqlite3.OperationalError:
+                pass
+
 
             # Contenidos no correspondidos (brechas en ambos sentidos)
             cursor.execute("""

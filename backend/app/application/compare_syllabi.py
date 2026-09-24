@@ -18,6 +18,7 @@ from app.domain.comparison import (
 from app.domain.content import ContentItem
 from app.domain.ports import IComparisonRepository
 from app.infrastructure.nlp.vector_service import NlpVectorService
+from app.infrastructure.pdf.spatial_locator import SpatialLocatorService
 
 
 DEFAULT_WEIGHTS = {
@@ -41,10 +42,12 @@ class CompareSyllabiUseCase:
         self,
         vector_service: NlpVectorService,
         comparison_repository: Optional[IComparisonRepository] = None,
+        spatial_locator: Optional[SpatialLocatorService] = None,
         model_version: str = "baseline-001",
     ) -> None:
         self.vector_service = vector_service
         self.repository = comparison_repository
+        self.spatial_locator = spatial_locator or SpatialLocatorService()
         self.model_version = model_version
 
     def execute(
@@ -55,6 +58,8 @@ class CompareSyllabiUseCase:
         compared_items: List[ContentItem],
         weights: Optional[Dict[str, float]] = None,
         thresholds: Optional[Dict[str, float]] = None,
+        objective_pdf_path: Optional[str] = None,
+        compared_pdf_path: Optional[str] = None,
     ) -> Comparison:
         """
         Ejecuta la comparación multidimensional:
@@ -154,10 +159,52 @@ class CompareSyllabiUseCase:
                     break
 
                 classification = self._classify(score, th)
+                match_id = f"MATCH-{uuid.uuid4().hex[:10].upper()}"
+
+                obj_regions = []
+                cmp_regions = []
+                if self.spatial_locator:
+                    if objective_pdf_path:
+                        obj_regions = self.spatial_locator.locate_regions_for_item(
+                            pdf_path=objective_pdf_path,
+                            match_id=match_id,
+                            syllabus_id=objective_syllabus_id,
+                            content_id=obj_item.id,
+                            page_number=obj_item.page_start,
+                            title=obj_item.title,
+                            snippet=obj_item.text,
+                            keywords=evidence.shared_keywords,
+                            evidence_type=evidence.evidence_type,
+                        )
+                    if compared_pdf_path:
+                        cmp_regions = self.spatial_locator.locate_regions_for_item(
+                            pdf_path=compared_pdf_path,
+                            match_id=match_id,
+                            syllabus_id=compared_syllabus_id,
+                            content_id=cmp_item.id,
+                            page_number=cmp_item.page_start,
+                            title=cmp_item.title,
+                            snippet=cmp_item.text,
+                            keywords=evidence.shared_keywords,
+                            evidence_type=evidence.evidence_type,
+                        )
+
+                enriched_evidence = MatchEvidence(
+                    evidence_type=evidence.evidence_type,
+                    shared_keywords=evidence.shared_keywords,
+                    semantic_score=evidence.semantic_score,
+                    lexical_score=evidence.lexical_score,
+                    objective_snippet=evidence.objective_snippet,
+                    compared_snippet=evidence.compared_snippet,
+                    objective_page=evidence.objective_page,
+                    compared_page=evidence.compared_page,
+                    objective_regions=obj_regions,
+                    compared_regions=cmp_regions,
+                )
 
                 matches.append(
                     ContentMatch(
-                        id=f"MATCH-{uuid.uuid4().hex[:10].upper()}",
+                        id=match_id,
                         comparison_id=comparison_id,
                         objective_item_id=obj_item.id,
                         compared_item_id=cmp_item.id,
@@ -169,7 +216,7 @@ class CompareSyllabiUseCase:
                         compared_page=cmp_item.page_start,
                         score_breakdown=breakdown,
                         classification=classification,
-                        evidence=evidence,
+                        evidence=enriched_evidence,
                     )
                 )
 
