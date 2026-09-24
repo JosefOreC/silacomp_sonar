@@ -203,18 +203,31 @@ class PdfReportGenerator(IReportGenerator):
         # --- 2. TABLA PRINCIPAL DE CORRESPONDENCIAS ---
         story.append(Paragraph("2. Tabla de Correspondencias Identificadas", h2_style))
 
-        match_table_data = [["Contenido Objetivo", "Contenido Comparado", "Tipo", "Score", "Evidencia"]]
+        match_table_data = [["Contenido Objetivo", "Contenido Comparado", "Tipo", "Score", "Evidencia y BBox"]]
         for m in sorted(comparison.matches, key=lambda x: x.score, reverse=True)[:25]:  # Hasta 25 principales en tabla
-            kw_str = ", ".join(m.evidence.shared_keywords[:4]) or "Evidencia semántica"
+            kw_str = ", ".join(m.evidence.shared_keywords[:3]) or "Evidencia semántica"
+            spatial_info = ""
+            obj_regs = getattr(m.evidence, "objective_regions", None) or []
+            cmp_regs = getattr(m.evidence, "compared_regions", None) or []
+            if obj_regs or cmp_regs:
+                coords = []
+                if obj_regs:
+                    r0 = obj_regs[0]
+                    coords.append(f"Obj P.{r0.page_number} [{r0.x0:.0f},{r0.y0:.0f}]")
+                if cmp_regs:
+                    rc = cmp_regs[0]
+                    coords.append(f"Cmp P.{rc.page_number} [{rc.x0:.0f},{rc.y0:.0f}]")
+                spatial_info = f"<br/><font color='#1D4ED8' size=6.5><b>BBox:</b> {' | '.join(coords)}</font>"
+
             match_table_data.append([
-                Paragraph(f"<b>{m.objective_title[:45]}</b><br/><font color='#64748B' size=7>{m.objective_section} (Pág. {m.objective_page})</font>", body_style),
-                Paragraph(f"<b>{m.compared_title[:45]}</b><br/><font color='#64748B' size=7>{m.compared_section} (Pág. {m.compared_page})</font>", body_style),
+                Paragraph(f"<b>{m.objective_title[:42]}</b><br/><font color='#64748B' size=7>{m.objective_section} (Pág. {m.objective_page})</font>", body_style),
+                Paragraph(f"<b>{m.compared_title[:42]}</b><br/><font color='#64748B' size=7>{m.compared_section} (Pág. {m.compared_page})</font>", body_style),
                 m.classification.value,
                 f"{m.score:.2f}",
-                Paragraph(f"<font size=7>{kw_str}</font>", body_style),
+                Paragraph(f"<font size=7>{kw_str}</font>{spatial_info}", body_style),
             ])
 
-        t_matches = Table(match_table_data, colWidths=[140, 140, 75, 45, 130])
+        t_matches = Table(match_table_data, colWidths=[130, 130, 70, 45, 155])
         t_matches.setStyle(
             TableStyle([
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1E293B")),
@@ -261,15 +274,65 @@ class PdfReportGenerator(IReportGenerator):
 
         story.append(Spacer(1, 15))
 
-        # --- 4. TRAZABILIDAD Y NOTA FORMAL ---
-        story.append(Paragraph("4. Metodología y Trazabilidad", h2_style))
+        # --- 4. TRAZABILIDAD Y METODOLOGÍA ---
+        story.append(Paragraph("4. Metodología y Trazabilidad Computacional", h2_style))
         method_text = (
-            f"<b>Motor computacional:</b> PyMuPDF (extracción por página) + TextNormalizer + "
+            f"<b>Motor computacional:</b> PyMuPDF (extracción no destructiva por página) + TextNormalizer + "
             f"TF-IDF n-gramas + Embeddings semánticos multilingües.<br/>"
             f"<b>Fórmula de Score:</b> 0.40 Semántica + 0.30 Léxica + 0.15 Palabras Clave + 0.15 Estructura.<br/>"
             f"<b>Versión del algoritmo:</b> {comparison.model_version} | <b>Identificador:</b> {comparison.id}"
         )
         story.append(Paragraph(method_text, body_style))
+
+        # --- 5. ANEXO DE TRAZABILIDAD ESPACIAL DE EVIDENCIAS (FASE 1.5) ---
+        has_spatial_evidence = any(
+            (getattr(m.evidence, "objective_regions", None) or getattr(m.evidence, "compared_regions", None))
+            for m in comparison.matches
+        )
+
+        if has_spatial_evidence:
+            story.append(Spacer(1, 10))
+            story.append(Paragraph("5. Anexo de Trazabilidad Espacial de Evidencias (Fase 1.5)", h2_style))
+            spatial_intro = (
+                "Para garantizar la transparencia pericial y reproducibilidad técnica conforme a la Fase 1.5, "
+                "se listan las coordenadas espaciales exactas (puntos tipográficos 72 DPI) "
+                "localizadas de forma no destructiva en los documentos fuente:"
+            )
+            story.append(Paragraph(spatial_intro, body_style))
+            story.append(Spacer(1, 6))
+
+            spatial_table_data = [["ID Coincidencia", "Páginas y Bounding Boxes Objetivo", "Páginas y Bounding Boxes Comparado", "Texto Evidencia Localizado"]]
+            for m in sorted(comparison.matches, key=lambda x: x.score, reverse=True)[:15]:
+                obj_regs = getattr(m.evidence, "objective_regions", None) or []
+                cmp_regs = getattr(m.evidence, "compared_regions", None) or []
+                if not obj_regs and not cmp_regs:
+                    continue
+
+                obj_desc = "<br/>".join([f"Pág. {r.page_number} [{r.x0:.1f}, {r.y0:.1f}, {r.x1:.1f}, {r.y1:.1f}]" for r in obj_regs[:2]]) or "N/D"
+                cmp_desc = "<br/>".join([f"Pág. {r.page_number} [{r.x0:.1f}, {r.y0:.1f}, {r.x1:.1f}, {r.y1:.1f}]" for r in cmp_regs[:2]]) or "N/D"
+                snippet = (m.evidence.objective_snippet[:90] + "...") if m.evidence.objective_snippet else "Sin extracto"
+
+                spatial_table_data.append([
+                    Paragraph(f"<font size=7><b>{m.id}</b><br/>{m.classification.value} ({m.score:.2f})</font>", body_style),
+                    Paragraph(f"<font size=6.5 color='#1E40AF'>{obj_desc}</font>", body_style),
+                    Paragraph(f"<font size=6.5 color='#047857'>{cmp_desc}</font>", body_style),
+                    Paragraph(f"<font size=6.5 color='#475569'><i>\"{snippet}\"</i></font>", body_style),
+                ])
+
+            if len(spatial_table_data) > 1:
+                t_spatial = Table(spatial_table_data, colWidths=[90, 140, 140, 160])
+                t_spatial.setStyle(
+                    TableStyle([
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#334155")),
+                        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                        ("FONTSIZE", (0, 0), (-1, -1), 7),
+                        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+                        ("TOPPADDING", (0, 0), (-1, -1), 3),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                    ])
+                )
+                story.append(t_spatial)
 
         story.append(Paragraph(f"<b>NOTA DE ALCANCE ACADÉMICO:</b><br/>{DISCLAIMER_TEXT}", disclaimer_style))
 

@@ -39,8 +39,8 @@
 | 15. Fase 1.5: API de PDF y Consulta de Evidencias | Completado | 100% | 3 | 3 |
 | 16. Fase 1.5: Frontend — Visor Doble y EvidenceOverlay | Completado | 100% | 4 | 4 |
 | 17. Fase 1.5: Frontend — Navegación Sincronizada y Revisión | Completado | 100% | 4 | 4 |
-| 18. Fase 1.5: Evidencias en Reportes y Pruebas E2E | Pendiente | 0% | 0 | 2 |
-| **TOTAL GENERAL (FASE 1.0 + FASE 1.5)** | **En Progreso** | **97%** | **64** | **66** |
+| 18. Fase 1.5: Evidencias en Reportes y Pruebas E2E | Completado | 100% | 2 | 2 |
+| **TOTAL GENERAL (FASE 1.0 + FASE 1.5)** | **Completado** | **100%** | **66** | **66** |
 
 ---
 
@@ -186,8 +186,8 @@
 ---
 
 ### Paquete 18: Evidencias en Reportes y Validación E2E de Fase 1.5
-- [ ] **TASK-18.1:** Extender el generador de reportes PDF formal para incorporar referencias de coordenadas y trazabilidad espacial de evidencias.
-- [ ] **TASK-18.2:** Pruebas automatizadas de extremo a extremo cubriendo el flujo completo de la Fase 1.5: Carga $\rightarrow$ Comparación $\rightarrow$ Visor Doble $\rightarrow$ Coordenadas $\rightarrow$ Revisión.
+- [x] **TASK-18.1:** Extender el generador de reportes PDF formal para incorporar referencias de coordenadas y trazabilidad espacial de evidencias. *(Completado el 2026-09-24)*
+- [x] **TASK-18.2:** Pruebas automatizadas de extremo a extremo cubriendo el flujo completo de la Fase 1.5: Carga $\rightarrow$ Comparación $\rightarrow$ Visor Doble $\rightarrow$ Coordenadas $\rightarrow$ Revisión. *(Completado el 2026-09-24)*
 
 ---
 
@@ -543,6 +543,29 @@
   - Suite completa de 32 pruebas automatizadas en backend (`pytest tests/`) ejecutadas con 100% de éxito.
   - Compilación de producción en frontend (`npm run build`) completada con 0 errores de tipado.
   - Verificación visual automatizada en navegador con subagente (`browser_subagent`) validando apertura de visor doble, renderizado de páginas simultáneas, cuadros delimitadores ortogonales y sincronización con flechas de avance.
+
+---
+
+### Sesión 14 — 2026-09-24
+- **Objetivos de la sesión:**
+  - Diagnosticar y corregir anomalías en la segmentación curricular y comparaciones de sílabos idénticos (resolución del bug 67%/66% y eliminación de redundancias).
+  - Optimizar el algoritmo de asignación competitiva de candidatos priorizando ítems libres (`usage == 0`) para evitar inanición (*starvation*) y repeticiones.
+  - Implementar precomputación vectorial por lote (`encode_texts` en Sentence Transformers + producto punto) reduciendo tiempos de comparación de 60s a <1s.
+  - Completar el **Paquete 18: Evidencias en Reportes y Validación E2E de Fase 1.5** (`TASK-18.1` y `TASK-18.2`).
+  - Incorporar trazabilidad espacial (Bounding Boxes, coordenadas de puntos tipográficos 72 DPI y extractos) en los generadores de reportes formales PDF y HTML.
+  - Extender la suite de pruebas automatizadas con el flujo completo E2E de Fase 1.5.
+- **Tareas completadas:**
+  - Corrección de `SyllabusSegmenter`: soporte para todas las viñetas Unicode (`•●○■▪\*\-–—`), descarte de preámbulos administrativos y filtrado de tablas/rúbricas.
+  - Optimización de `CompareSyllabiUseCase`: selección competitiva sin redundancia, atajo de identidad exacta 100% y batch embeddings.
+  - Resincronización y re-segmentación limpia de todos los sílabos en `convcomp.db`.
+  - `TASK-18.1`: Incorporación de coordenadas espaciales y Anexo 5 en reportes formales PDF y HTML.
+  - `TASK-18.2`: Implementación de prueba E2E de Fase 1.5 en `tests/integration/test_fase1_5_endpoints.py`.
+- **Resultados de Validación:**
+  - Suite completa de **35 pruebas automatizadas pasando al 100%** en `pytest`.
+  - Compilación frontend de producción (`npm run build`) en 990 ms con 0 errores de TypeScript.
+  - Cobertura de sílabos idénticos validada matemáticamente al **100.0%** en ambas direcciones con score global **1.0**.
+  - **Fase 1.0 + Fase 1.5 completadas al 100% (66 / 66 tareas).**
+
 
 
 

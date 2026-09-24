@@ -37,6 +37,12 @@ class HtmlReportGenerator:
                 MatchClassification.NO_MATCH: "badge-nomatch",
             }.get(m.classification, "badge-uncertain")
 
+            obj_regs = getattr(m.evidence, "objective_regions", None) or []
+            cmp_regs = getattr(m.evidence, "compared_regions", None) or []
+            spatial_badge = ""
+            if obj_regs or cmp_regs:
+                spatial_badge = "<br/><span style='display:inline-block; font-size:10px; background:#EFF6FF; color:#1D4ED8; padding:1px 5px; border-radius:3px; margin-top:3px; font-weight:600;'>&#128269; BBox Localizado en PDF</span>"
+
             kw_str = ", ".join(m.evidence.shared_keywords[:5]) or "Evidencia semántica contextual"
 
             match_rows_html.append(f"""
@@ -45,7 +51,7 @@ class HtmlReportGenerator:
                 <td><strong>{m.compared_title}</strong><br><small class="text-muted">{m.compared_section} (Pág. {m.compared_page})</small></td>
                 <td style="text-align: center;"><span class="badge {badge_class}">{m.classification.value}</span></td>
                 <td style="text-align: center; font-weight: bold;">{m.score:.2f}</td>
-                <td><small>{kw_str}</small></td>
+                <td><small>{kw_str}</small>{spatial_badge}</td>
             </tr>
             """)
 
@@ -53,6 +59,23 @@ class HtmlReportGenerator:
         detail_blocks_html = []
         for idx, m in enumerate(sorted(comparison.matches, key=lambda x: x.score, reverse=True), start=1):
             kw_list_html = "".join(f"<li><code>{kw}</code></li>" for kw in m.evidence.shared_keywords) or "<li><em>Similitud conceptual en espacio de embeddings</em></li>"
+            
+            obj_regs = getattr(m.evidence, "objective_regions", None) or []
+            cmp_regs = getattr(m.evidence, "compared_regions", None) or []
+            spatial_detail_html = ""
+            if obj_regs or cmp_regs:
+                obj_coord_text = "<br>".join([f"Pág. {r.page_number} [x0: {r.x0:.1f}, y0: {r.y0:.1f}, x1: {r.x1:.1f}, y1: {r.y1:.1f}]" for r in obj_regs[:3]]) or "No localizado"
+                cmp_coord_text = "<br>".join([f"Pág. {r.page_number} [x0: {r.x0:.1f}, y0: {r.y0:.1f}, x1: {r.x1:.1f}, y1: {r.y1:.1f}]" for r in cmp_regs[:3]]) or "No localizado"
+                spatial_detail_html = f"""
+                <div class="spatial-box" style="margin-top: 8px; padding: 8px 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; font-size: 11px;">
+                    <strong style="color: #0F172A;">&#128269; Trazabilidad Espacial de Evidencias (Fase 1.5):</strong>
+                    <div class="grid-2" style="margin-top: 4px;">
+                        <div><strong style="color: #1E40AF;">Coordenadas PDF Objetivo:</strong><br><small>{obj_coord_text}</small></div>
+                        <div><strong style="color: #047857;">Coordenadas PDF Comparado:</strong><br><small>{cmp_coord_text}</small></div>
+                    </div>
+                </div>
+                """
+
             detail_blocks_html.append(f"""
             <div class="match-detail-card">
                 <h4>6.{idx}. {m.objective_title} &harr; {m.compared_title}</h4>
@@ -77,6 +100,7 @@ class HtmlReportGenerator:
                     <strong>Términos clave compartidos:</strong>
                     <ul class="inline-list">{kw_list_html}</ul>
                 </div>
+                {spatial_detail_html}
             </div>
             """)
 
