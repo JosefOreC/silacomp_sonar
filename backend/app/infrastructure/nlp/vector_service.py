@@ -46,6 +46,22 @@ class NlpVectorService(INlpVectorService):
             self._model_load_failed = True
             return None
 
+    def encode_texts(self, texts: List[str]) -> Optional[np.ndarray]:
+        """Codifica un lote completo de textos en vectores normalizados de embeddings."""
+        if not texts:
+            return np.zeros((0, 384), dtype=np.float32)
+        model = self._get_embedding_model()
+        if model is None:
+            return None
+        try:
+            clean_texts = [TextNormalizer.clean_display_text(t) for t in texts]
+            embeddings = model.encode(clean_texts, convert_to_numpy=True, normalize_embeddings=True)
+            return embeddings
+        except Exception as e:
+            logger.warning("Error en batch encoding con Sentence Transformer: %s", e)
+            return None
+
+
     def compute_lexical_similarity(self, text_a: str, text_b: str) -> float:
         """
         Calcula la similitud léxica mediante TF-IDF unigrama+bigrama y similitud coseno.

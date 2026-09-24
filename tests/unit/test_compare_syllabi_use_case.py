@@ -122,3 +122,155 @@ def test_compare_syllabi_flow_and_bidirectionality() -> None:
     # Coberturas
     assert comparison.objective_coverage > 50.0  # Al menos 2 de 3 cubiertos
     assert comparison.compared_coverage > 50.0
+
+
+def test_redundancy_suppression_and_anti_duplication() -> None:
+    """Verifica que el motor de IA no repita candidatos idénticos ni sature correspondencias redundantes."""
+    vector_service = NlpVectorService()
+    use_case = CompareSyllabiUseCase(vector_service=vector_service, model_version="test-anti-redundancy")
+
+    obj_items = [
+        ContentItem(
+            id="OBJ-A",
+            syllabus_id="S_OBJ",
+            section_name="Unidad I",
+            title="Protocolo OSPF",
+            text="Configuración y enrutamiento con el protocolo OSPF v2 para redes WAN.",
+            normalized_text="configuracion enrutamiento protocolo ospf v2 redes wan",
+            page_start=1,
+            page_end=1,
+            order=1,
+            unit_number=1,
+        ),
+        ContentItem(
+            id="OBJ-B",
+            syllabus_id="S_OBJ",
+            section_name="Unidad II",
+            title="Listas de Control de Acceso ACL",
+            text="Filtrado de paquetes mediante ACL estándar y extendidas IPv4.",
+            normalized_text="filtrado paquetes mediante acl estandar extendidas ipv4",
+            page_start=2,
+            page_end=2,
+            order=2,
+            unit_number=2,
+        ),
+    ]
+
+    # Varios ítems comparados, algunos muy redundantes entre sí
+    cmp_items = [
+        ContentItem(
+            id="CMP-A1",
+            syllabus_id="S_CMP",
+            section_name="Módulo 1",
+            title="Enrutamiento Dinámico OSPF",
+            text="Configuración y enrutamiento con el protocolo OSPF v2 para redes WAN empresariales.",
+            normalized_text="configuracion enrutamiento protocolo ospf v2 redes wan empresariales",
+            page_start=1,
+            page_end=1,
+            order=1,
+            unit_number=1,
+        ),
+        ContentItem(
+            id="CMP-A2",  # Casi duplicado de A1
+            syllabus_id="S_CMP",
+            section_name="Módulo 1",
+            title="Enrutamiento OSPF",
+            text="Configuración del protocolo OSPF v2 para redes WAN empresariales.",
+            normalized_text="configuracion protocolo ospf v2 redes wan empresariales",
+            page_start=1,
+            page_end=1,
+            order=2,
+            unit_number=1,
+        ),
+        ContentItem(
+            id="CMP-B1",
+            syllabus_id="S_CMP",
+            section_name="Módulo 2",
+            title="Seguridad con Listas de Control de Acceso ACL",
+            text="Filtrado de paquetes mediante ACL estándar y extendidas IPv4 en routers.",
+            normalized_text="filtrado paquetes mediante acl estandar extendidas ipv4 routers",
+            page_start=2,
+            page_end=2,
+            order=3,
+            unit_number=2,
+        ),
+    ]
+
+    comp = use_case.execute(
+        objective_syllabus_id="S_OBJ",
+        compared_syllabus_id="S_CMP",
+        objective_items=obj_items,
+        compared_items=cmp_items,
+    )
+
+    # 1. No debe haber pares idénticos repetidos
+    match_pairs = [(m.objective_item_id, m.compared_item_id) for m in comp.matches]
+    assert len(match_pairs) == len(set(match_pairs))
+
+    # 2. OBJ-A no debe emitir candidatos redundantes (A1 y A2 son prácticamente el mismo texto, solo se elige el mejor)
+    matches_for_obj_a = [m for m in comp.matches if m.objective_item_id == "OBJ-A"]
+    assert len(matches_for_obj_a) == 1
+    assert matches_for_obj_a[0].compared_item_id in ("CMP-A1", "CMP-A2")
+
+
+    # 3. OBJ-B debe emparejar con CMP-B1
+    matches_for_obj_b = [m for m in comp.matches if m.objective_item_id == "OBJ-B"]
+    assert len(matches_for_obj_b) == 1
+    assert matches_for_obj_b[0].compared_item_id == "CMP-B1"
+
+
+def test_compare_identical_syllabi_gives_100_percent() -> None:
+    """Verifica que dos sílabos con contenidos 100% idénticos alcancen 100% de cobertura y score 1.0."""
+    vector_service = NlpVectorService()
+    use_case = CompareSyllabiUseCase(vector_service=vector_service, model_version="test-v1")
+
+    items_obj = [
+        ContentItem(
+            id=f"OBJ-{i:02d}",
+            syllabus_id="S_IDENTICAL_OBJ",
+            section_name=f"Unidad {i}",
+            title=f"Tema Relevante {i}",
+            text=f"Descripción completa y detallada del contenido del tema {i} con conceptos avanzados.",
+            normalized_text=f"descripcion completa detallada contenido tema {i} conceptos avanzados",
+            page_start=i,
+            page_end=i,
+            order=i,
+            unit_number=i,
+        )
+        for i in range(1, 11)
+    ]
+
+    items_cmp = [
+        ContentItem(
+            id=f"CMP-{i:02d}",
+            syllabus_id="S_IDENTICAL_CMP",
+            section_name=f"Unidad {i}",
+            title=f"Tema Relevante {i}",
+            text=f"Descripción completa y detallada del contenido del tema {i} con conceptos avanzados.",
+            normalized_text=f"descripcion completa detallada contenido tema {i} conceptos avanzados",
+            page_start=i,
+            page_end=i,
+            order=i,
+            unit_number=i,
+        )
+        for i in range(1, 11)
+    ]
+
+    comp = use_case.execute(
+        objective_syllabus_id="S_IDENTICAL_OBJ",
+        compared_syllabus_id="S_IDENTICAL_CMP",
+        objective_items=items_obj,
+        compared_items=items_cmp,
+    )
+
+    assert comp.objective_coverage == 100.0
+    assert comp.compared_coverage == 100.0
+    assert comp.global_score == 1.0
+    assert len(comp.matches) == 10
+    assert len(comp.unmatched_objective) == 0
+    assert len(comp.unmatched_compared) == 0
+    for m in comp.matches:
+        assert m.classification == MatchClassification.MATCH
+        assert m.score_breakdown.composite_score == 1.0
+
+

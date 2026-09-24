@@ -90,8 +90,9 @@
 ### Paquete 6: Algoritmo de Comparación, Scoring y Clasificación
 - [x] **TASK-06.1:** Implementar fórmula de score compuesto con pesos configurables ($w_{sem}, w_{lex}, w_{key}, w_{est}$). *(Completado el 2026-09-24)*
 - [x] **TASK-06.2:** Implementar clasifición categórica con umbrales configurables (`MATCH`, `PARTIAL_MATCH`, `UNCERTAIN`, `NO_MATCH`). *(Completado el 2026-09-24)*
-- [x] **TASK-06.3:** Implementar soporte para relaciones cardinales múltiples (1:1, 1:N, N:1). *(Completado el 2026-09-24)*
+- [x] **TASK-06.3:** Implementar soporte para relaciones cardinales múltiples controladas (1:1, 1:N, N:1) con eliminación de redundancia y asignación competitiva (supresión de candidatos repetidos, deduplicación de tópicos, priorización de ítems libres para evitar inanición/starvation, filtrado de preámbulo administrativo en unidades y atajo de correspondencia idéntica 100%). *(Completado el 2026-09-24)*
 - [x] **TASK-06.4:** Implementar cálculo de métricas bidireccionales de cobertura ($S_{obj} \rightarrow S_{cmp}$ y $S_{cmp} \rightarrow S_{obj}$) y porcentaje global. *(Completado el 2026-09-24)*
+
 
 ---
 
