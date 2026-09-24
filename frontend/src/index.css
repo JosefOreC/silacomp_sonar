@@ -1,0 +1,231 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Paleta Formal Académica en Tonos Grises y Grafito */
+  --bg-main: #111215;
+  --bg-primary: #111215;
+  --bg-surface: #18191f;
+  --bg-secondary: #18191f;
+  --bg-elevated: #22242c;
+  --bg-hover: #2c2f38;
+
+  /* Tipografía y Textos de Alta Legibilidad y Contraste */
+  --text-main: #FFFFFF;
+  --text-primary: #FFFFFF;
+  --text-secondary: #E2E8F0; /* Slate 200: lectura cómoda, nítida y luminosa */
+  --text-muted: #CBD5E1;     /* Slate 300: notas secundarias perfectamente legibles */
+
+  --border-color: #32353e;
+  --border-focus: #525866;
+  --accent-primary: #E2E8F0;
+  --accent-info: #cbd5e1;
+  --accent-success: #10B981;
+  --accent-warning: #F59E0B;
+  --accent-danger: #EF4444;
+
+  /* Estados de Correspondencia */
+  --match-color: #34d399;
+  --match-bg: rgba(52, 211, 153, 0.10);
+  --match-border: rgba(52, 211, 153, 0.25);
+
+  --partial-color: #fbbf24;
+  --partial-bg: rgba(251, 191, 36, 0.10);
+  --partial-border: rgba(251, 191, 36, 0.25);
+
+  --uncertain-color: #c084fc;
+  --uncertain-bg: rgba(192, 132, 252, 0.10);
+  --uncertain-border: rgba(192, 132, 252, 0.25);
+
+  --nomatch-color: #f87171;
+  --nomatch-bg: rgba(248, 113, 113, 0.10);
+  --nomatch-border: rgba(248, 113, 113, 0.25);
+
+  --primary-accent: #374151;
+  --primary-hover: #4b5563;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -2px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -4px rgba(0, 0, 0, 0.7);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border-radius: 0 !important;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tipografía */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-main);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+p, span, div {
+  color: inherit;
+}
+
+a {
+  color: var(--text-main);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+a:hover {
+  color: #FFFFFF;
+  text-decoration-color: var(--text-main);
+}
+
+/* Badges de Correspondencia */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge-match {
+  color: var(--match-color);
+  background: var(--match-bg);
+  border: 1px solid var(--match-border);
+}
+
+.badge-partial {
+  color: var(--partial-color);
+  background: var(--partial-bg);
+  border: 1px solid var(--partial-border);
+}
+
+.badge-uncertain {
+  color: var(--uncertain-color);
+  background: var(--uncertain-bg);
+  border: 1px solid var(--uncertain-border);
+}
+
+.badge-nomatch {
+  color: var(--nomatch-color);
+  background: var(--nomatch-bg);
+  border: 1px solid var(--nomatch-border);
+}
+
+/* Botones */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.btn-primary {
+  background: #374151;
+  color: #FFFFFF;
+  border-color: #4b5563;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+.btn-secondary {
+  background: var(--bg-surface);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-elevated);
+  border-color: var(--text-secondary);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Contenedores y Cards */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+}
+
+.card-elevated {
+  background: var(--bg-elevated);
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 0px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Reglas globales de controles de formulario: Select y Option con letras negras */
+select {
+  color: #000000 !important;
+  background-color: #FFFFFF !important;
+}
+
+select option {
+  color: #000000 !important;
+  background-color: #FFFFFF !important;
+}
+
+option {
+  color: #000000 !important;
+  background-color: #FFFFFF !important;
+}
+
