@@ -110,7 +110,7 @@ class SqliteComparisonRepository(IComparisonRepository):
                     """,
                     (
                         m.id,
-                        m.comparison_id,
+                        comparison.id,
                         m.objective_item_id,
                         m.compared_item_id,
                         m.objective_title,

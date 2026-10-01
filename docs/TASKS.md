@@ -563,8 +563,57 @@
 - **Resultados de Validación:**
   - Suite completa de **35 pruebas automatizadas pasando al 100%** en `pytest`.
   - Compilación frontend de producción (`npm run build`) en 990 ms con 0 errores de TypeScript.
-  - Cobertura de sílabos idénticos validada matemáticamente al **100.0%** en ambas direcciones con score global **1.0**.
-  - **Fase 1.0 + Fase 1.5 completadas al 100% (66 / 66 tareas).**
+---
+
+### Sesión 15 — 2026-10-01
+- **Objetivos de la sesión:**
+  - Diagnosticar y corregir la anomalía del visor PDF donde se marcaban zonas incorrectas (cabeceras en lugar de tópicos) o se remarcaba únicamente una sola palabra aislada (< 80 pt) en lugar del contenido temático correspondiente.
+  - Implementar algoritmo de fusión de fragmentos tipográficos en líneas completas y agrupamiento de líneas contiguas en recuadros envolventes (*envelope bounding boxes*) coherentes.
+  - Eliminar la búsqueda ingenua de palabras clave aisladas (`keywords[:3]`) que saltaban a ocurrencias accidentales en cabeceras o tablas.
+  - Corregir la resolución de número de página en `SyllabusSegmenter` y `SpatialLocatorService` para temas que cruzan a páginas posteriores dentro de una misma unidad.
+  - Implementar auto-desplazamiento suave (*auto-scroll*) en el visor PDF hacia la primera evidencia de la página renderizada.
+  - Actualizar retroactivamente todas las correspondencias de la base de datos `convcomp.db`.
+- **Tareas completadas:**
+  - `TASK-VIEWER-FIX-01`: Reingeniería de [SpatialLocatorService](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/app/infrastructure/pdf/spatial_locator.py):
+    - Limpieza de prefijos sintéticos generados durante la segmentación (`THEME - `, `UNIDAD X: `, `Semana Y: `, viñetas).
+    - Fusión de rectángulos de palabras en líneas tipográficas completas (`_merge_rects_into_lines`).
+    - Agrupamiento de líneas contiguas en bounding boxes de párrafo (`_cluster_contiguous_lines`).
+    - Búsqueda adaptativa de página real en páginas adyacentes si el tema cruza de página.
+  - `TASK-VIEWER-FIX-02`: Actualización de [CompareSyllabiUseCase](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/app/application/compare_syllabi.py) para asignar `actual_obj_page` y `actual_cmp_page` basados en las evidencias localizadas.
+  - `TASK-VIEWER-FIX-03`: Mejora en [SyllabusSegmenter](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/app/infrastructure/nlp/segmenter.py) con `_resolve_item_page` para detectar de forma temprana en qué página del texto crudo cae cada tópico.
+  - `TASK-VIEWER-FIX-04`: Optimización en [EvidenceOverlay.tsx](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/frontend/src/components/EvidenceOverlay.tsx) con control de desborde superior para insignias (`top < 24`) e índice ordinal para evitar solapamiento.
+  - `TASK-VIEWER-FIX-05`: Implementación de auto-centrado y desplazamiento suave en [PdfDocumentViewer.tsx](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/frontend/src/components/PdfDocumentViewer.tsx).
+  - `TASK-VIEWER-FIX-06`: Script de migración y refresco retroactivo en [refresh_evidence_regions.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/scripts/refresh_evidence_regions.py) actualizando 1567 correspondencias existentes en `convcomp.db`.
+- **Resultados de Validación:**
+  - Suite de **37 pruebas automatizadas pasando al 100%** en `pytest` (incluyendo 2 nuevas pruebas unitarias para ancho de frase y auto-detección de página).
+  - Compilación frontend de producción (`npm run build`) limpia en 686 ms con 0 errores.
+  - Inspección pericial en base de datos validando que tópicos de 1 sola palabra (6-36 pt) ahora abarcan adecuadamente las frases completas (100-360 pt) y párrafos consolidados.
+---
+
+### Sesión 16 — 2026-10-01
+- **Objetivos de la sesión:**
+  - Optimizar la IA de comparación de sílabos resolviendo la deficiencia del emparejamiento voraz (*greedy*) mediante optimización global en grafo bipartito (`scipy.optimize.linear_sum_assignment` / Algoritmo Húngaro).
+  - Implementar ajuste dinámico y adaptativo de pesos multivariados para neutralizar penalizaciones estructurales artificiales ante diferencias en el orden curricular de unidades entre universidades (ej. Unidad 1 vs Unidad 5).
+  - Potenciar el vocabulario técnico de ingeniería mediante un diccionario canónico de acrónimos y conceptos clave (`TECHNICAL_ACRONYMS`) integrado en normalización, TF-IDF y Sentence Transformers.
+  - Actualizar la versión formal del algoritmo a `bipartite-adaptive-002` garantizando 100% de explicabilidad, determinismo matemático y compatibilidad con el sistema de trazabilidad espacial y revisiones humanas.
+  - Desarrollar pruebas unitarias para validación anti-canibalización y preservación de score entre unidades dispares.
+- **Tareas completadas:**
+  - `TASK-AI-OPT-01`: Incorporación de `TECHNICAL_ACRONYMS` y `expand_technical_acronyms` en [normalizer.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/app/infrastructure/nlp/normalizer.py) con soporte bidireccional para bases de datos (BBDD, SGBD, RDBMS), redes (WAN, LAN, VPN, OSPF, BGP, ACL, CIDR), sistemas (POO, MVC, API, REST, CRUD) y modelado (1FN, 2FN, 3FN).
+  - `TASK-AI-OPT-02`: Integración de expansión canónica de acrónimos en [vector_service.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/app/infrastructure/nlp/vector_service.py) para vectorización en lote (`encode_texts`) y similitud semántica.
+  - `TASK-AI-OPT-03`: Implementación de [linear_sum_assignment](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/app/application/compare_syllabi.py) en `CompareSyllabiUseCase` para maximizar globalmente la afinidad bipartita entre los conjuntos temáticos de ambos sílabos.
+  - `TASK-AI-OPT-04`: Algoritmo de ponderación adaptativa en `_compute_pair_score`: neutralización del peso estructural (a `0.0`) y transferencia a componentes semántica (`0.50`) y léxica (`0.35`) cuando la afinidad conceptual es sólida ($\ge 0.75$ léxica o $\ge 0.80$ semántica), garantizando la correcta clasificación como `MATCH`.
+  - `TASK-AI-OPT-05`: Nueva suite de pruebas unitarias en [test_compare_syllabi_use_case.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/tests/unit/test_compare_syllabi_use_case.py):
+    - `test_bipartite_matching_prevents_greedy_cannibalization`: valida que un tema inicial no canibalice el candidato de afinidad perfecta de un tema posterior.
+    - `test_adaptive_weights_preserves_score_across_different_units`: valida que temas conceptualmente idénticos en unidades distantes conserven clasificación `MATCH` sin castigo estructural.
+- **Resultados de Validación:**
+  - Suite completa de **40 pruebas automatizadas pasando al 100%** en `pytest` (41 s).
+  - Compilación frontend de producción (`npm run build`) limpia en 565 ms con 0 errores de TypeScript.
+  - `TASK-AI-UNIV-01`: Implementación de Contención Direccional Asimétrica (`compute_asymmetric_containment`) y Coeficiente de Szymkiewicz-Simpson en [vector_service.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/app/infrastructure/nlp/vector_service.py), eliminando el sesgo de longitud en cualquier disciplina académica.
+  - `TASK-AI-UNIV-02`: Enriquecimiento jerárquico universal en [segmenter.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/app/infrastructure/nlp/segmenter.py), incorporando linaje temático multilínea (`course_name` + `unit_theme` + `item.text`) para todas las materias.
+  - `TASK-AI-UNIV-03`: Arquitectura de correspondencia centrada en el Sílabo Objetivo en [compare_syllabi.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/app/application/compare_syllabi.py), permitiendo la subsunción válida Muchos-a-Uno cuando un bloque comprensivo del comparado satisface a múltiples tópicos del objetivo.
+  - `TASK-AI-UNIV-04`: Prueba unitaria universal de convalidación orientada al objetivo (`test_target_driven_subsumption_universal_coverage`) en [test_compare_syllabi_use_case.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/tests/unit/test_compare_syllabi_use_case.py).
+
+
 
 
 

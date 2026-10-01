@@ -84,8 +84,9 @@ export const EvidenceOverlay: React.FC<EvidenceOverlayProps> = ({
 
         const left = Math.max(0, region.x0 * scaleX);
         const top = Math.max(0, region.y0 * scaleY);
-        const width = Math.max(20, (region.x1 - region.x0) * scaleX);
-        const height = Math.max(14, (region.y1 - region.y0) * scaleY);
+        const width = Math.max(30, (region.x1 - region.x0) * scaleX);
+        const height = Math.max(16, (region.y1 - region.y0) * scaleY);
+        const isNearTop = top < 24;
 
         return (
           <div
@@ -98,20 +99,21 @@ export const EvidenceOverlay: React.FC<EvidenceOverlayProps> = ({
               height: `${height}px`,
               border: styleConfig.border,
               backgroundColor: styleConfig.backgroundColor,
+              boxShadow: '0 0 0 1px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.2)',
               borderRadius: 0,
               boxSizing: 'border-box',
               pointerEvents: 'auto',
               cursor: 'help',
-              transition: 'border-color 0.15s ease',
+              transition: 'all 0.15s ease',
             }}
             title={`Evidencia: ${region.text || 'Contenido detectado'} (Pág. ${region.page_number})`}
           >
-            {/* Insignia indicadora en la esquina superior del cuadro */}
+            {/* Insignia indicadora con prevención de desborde superior */}
             <span
               style={{
                 position: 'absolute',
-                top: '-18px',
-                left: '-2px',
+                top: isNearTop ? '2px' : '-19px',
+                left: isNearTop ? '2px' : '-2px',
                 backgroundColor: styleConfig.badgeBg,
                 color: styleConfig.badgeText,
                 fontSize: '9px',
@@ -121,10 +123,12 @@ export const EvidenceOverlay: React.FC<EvidenceOverlayProps> = ({
                 letterSpacing: '0.05em',
                 borderRadius: 0,
                 whiteSpace: 'nowrap',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.5)',
+                pointerEvents: 'none',
+                zIndex: 20,
               }}
             >
-              {styleConfig.label}
+              {index === 0 ? styleConfig.label : `${styleConfig.label} #${index + 1}`}
             </span>
           </div>
         );

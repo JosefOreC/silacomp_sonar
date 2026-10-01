@@ -54,7 +54,10 @@ class NlpVectorService(INlpVectorService):
         if model is None:
             return None
         try:
-            clean_texts = [TextNormalizer.clean_display_text(t) for t in texts]
+            clean_texts = [
+                TextNormalizer.expand_technical_acronyms(TextNormalizer.clean_display_text(t))
+                for t in texts
+            ]
             embeddings = model.encode(clean_texts, convert_to_numpy=True, normalize_embeddings=True)
             return embeddings
         except Exception as e:
@@ -62,9 +65,25 @@ class NlpVectorService(INlpVectorService):
             return None
 
 
+    def compute_asymmetric_containment(self, text_a: str, text_b: str) -> float:
+        """
+        Calcula la contención direccional de conceptos:
+        Determina en qué proporción los términos significativos de A están subsumidos en B.
+        Rango: [0.0, 1.0]. Universal para cualquier disciplina académica.
+        """
+        norm_a = TextNormalizer.normalize_for_indexing(text_a)
+        norm_b = TextNormalizer.normalize_for_indexing(text_b)
+        words_a = [w for w in norm_a.split() if len(w) >= 3]
+        words_b = set(norm_b.split())
+        if not words_a:
+            return 0.0
+        matched = sum(1 for w in words_a if w in words_b)
+        return round(matched / len(words_a), 4)
+
     def compute_lexical_similarity(self, text_a: str, text_b: str) -> float:
         """
-        Calcula la similitud léxica mediante TF-IDF unigrama+bigrama y similitud coseno.
+        Calcula la similitud léxica mediante TF-IDF (1-2 gramas) y contención direccional asimétrica.
+        Tolera asimetría de granularidad (ej. tema sintético de 2 palabras vs párrafo descriptivo de 30 palabras).
         Rango: [0.0, 1.0].
         """
         norm_a = TextNormalizer.normalize_for_indexing(text_a)
@@ -76,13 +95,20 @@ class NlpVectorService(INlpVectorService):
         if norm_a == norm_b:
             return 1.0
 
+        # Contención direccional (inclusión de conceptos de un texto en otro)
+        cont_ab = self.compute_asymmetric_containment(text_a, text_b)
+        cont_ba = self.compute_asymmetric_containment(text_b, text_a)
+        max_containment = max(cont_ab, cont_ba)
+
         try:
             vectorizer = TfidfVectorizer(ngram_range=(1, 2), min_df=1)
             tfidf_matrix = vectorizer.fit_transform([norm_a, norm_b])
-            sim = float(cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0])
+            cos_sim = float(cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0])
+            # La afinidad léxica combina el coseno simétrico con la contención asimétrica de conceptos
+            sim = max(cos_sim, max_containment)
             return max(0.0, min(1.0, round(sim, 4)))
         except Exception:
-            return 0.0
+            return max(0.0, min(1.0, round(max_containment, 4)))
 
     def compute_semantic_similarity(self, text_a: str, text_b: str) -> float:
         """
@@ -101,7 +127,9 @@ class NlpVectorService(INlpVectorService):
         model = self._get_embedding_model()
         if model is not None:
             try:
-                embeddings = model.encode([clean_a, clean_b], convert_to_numpy=True)
+                exp_a = TextNormalizer.expand_technical_acronyms(clean_a)
+                exp_b = TextNormalizer.expand_technical_acronyms(clean_b)
+                embeddings = model.encode([exp_a, exp_b], convert_to_numpy=True)
                 norm_a = np.linalg.norm(embeddings[0])
                 norm_b = np.linalg.norm(embeddings[1])
                 if norm_a == 0 or norm_b == 0:
@@ -167,20 +195,27 @@ class NlpVectorService(INlpVectorService):
 
     def compute_keyword_overlap(self, text_a: str, text_b: str) -> float:
         """
-        Calcula el coeficiente de solapamiento de vocabulario y términos clave (Jaccard ponderado).
+        Calcula el coeficiente de solapamiento de vocabulario y términos clave:
+        Combina Jaccard simétrico con el Coeficiente de Szymkiewicz-Simpson (overlap coefficient)
+        para no castigar conjuntos temáticos de tamaños dispares.
         """
         norm_a = TextNormalizer.normalize_for_indexing(text_a)
         norm_b = TextNormalizer.normalize_for_indexing(text_b)
 
-        tokens_a = set(norm_a.split())
-        tokens_b = set(norm_b.split())
+        tokens_a = {t for t in norm_a.split() if len(t) >= 3}
+        tokens_b = {t for t in norm_b.split() if len(t) >= 3}
 
         if not tokens_a or not tokens_b:
             return 0.0
 
         intersection = len(tokens_a & tokens_b)
         union = len(tokens_a | tokens_b)
-        return round(intersection / union, 4) if union > 0 else 0.0
+        min_cardinality = min(len(tokens_a), len(tokens_b))
+
+        jaccard = intersection / union if union > 0 else 0.0
+        simpson = intersection / min_cardinality if min_cardinality > 0 else 0.0
+
+        return max(0.0, min(1.0, round(max(jaccard, simpson), 4)))
 
     def compute_structural_similarity(
         self,

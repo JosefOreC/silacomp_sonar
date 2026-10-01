@@ -4,9 +4,11 @@ Implementa el motor híbrido, scoring ponderado, clasificación y análisis bidi
 """
 
 from datetime import datetime
+import re
 from typing import Dict, List, Optional, Set, Tuple
 import uuid
 import numpy as np
+from scipy.optimize import linear_sum_assignment
 
 from app.domain.comparison import (
     Comparison,
@@ -24,17 +26,18 @@ from app.infrastructure.pdf.spatial_locator import SpatialLocatorService
 
 
 DEFAULT_WEIGHTS = {
-    "semantic": 0.40,
+    "semantic": 0.45,
     "lexical": 0.30,
     "keyword": 0.15,
-    "structural": 0.15,
+    "structural": 0.10,
 }
 
 DEFAULT_THRESHOLDS = {
-    "match": 0.85,
-    "partial": 0.70,
-    "uncertain": 0.50,
+    "match": 0.75,
+    "partial": 0.58,
+    "uncertain": 0.45,
 }
+
 
 
 class CompareSyllabiUseCase:
@@ -45,12 +48,67 @@ class CompareSyllabiUseCase:
         vector_service: NlpVectorService,
         comparison_repository: Optional[IComparisonRepository] = None,
         spatial_locator: Optional[SpatialLocatorService] = None,
-        model_version: str = "baseline-001",
+        model_version: str = "bipartite-adaptive-002",
     ) -> None:
         self.vector_service = vector_service
         self.repository = comparison_repository
         self.spatial_locator = spatial_locator or SpatialLocatorService()
         self.model_version = model_version
+
+    def _compute_pair_score(
+        self,
+        sem_sim: float,
+        lex_sim: float,
+        key_sim: float,
+        est_sim: float,
+        base_weights: Dict[str, float],
+    ) -> Tuple[float, ScoreBreakdown]:
+        """
+        Calcula el score compuesto con ajuste adaptativo de pesos:
+        - Si la afinidad conceptual es sólida (sem_sim >= 0.75 o lex_sim >= 0.70),
+          la equivalencia temática es concluyente: la penalización estructural se neutraliza (0.0)
+          y se transfiere a semántica (0.50), léxica (0.35) y palabras clave (0.15).
+        - Si la afinidad conceptual es moderada (sem_sim >= 0.60 o lex_sim >= 0.45),
+          se atenúa la penalización estructural a 0.05.
+        - Si hay contención léxica directa alta (lex_sim >= 0.85) o afinidad semántica concluyente (sem_sim >= 0.85),
+          se garantiza un piso representativo de convalidación académica (>= 0.80).
+        """
+        w = dict(base_weights)
+        if sem_sim >= 0.75 or lex_sim >= 0.70:
+            w["structural"] = 0.0
+            w["semantic"] = 0.50
+            w["lexical"] = 0.35
+            w["keyword"] = 0.15
+        elif sem_sim >= 0.60 or lex_sim >= 0.45:
+            w["structural"] = 0.05
+            w["semantic"] = 0.50
+            w["lexical"] = 0.30
+            w["keyword"] = 0.15
+
+        composite = (
+            w.get("semantic", 0.45) * sem_sim
+            + w.get("lexical", 0.30) * lex_sim
+            + w.get("keyword", 0.15) * key_sim
+            + w.get("structural", 0.10) * est_sim
+        )
+
+        # Garantizar piso de correspondencia ante contención directa o equivalencia terminológica
+        if lex_sim >= 0.85 or sem_sim >= 0.85:
+            composite = max(composite, 0.80)
+        elif lex_sim >= 0.65 or sem_sim >= 0.65:
+            composite = max(composite, 0.60)
+
+        composite = max(0.0, min(1.0, round(composite, 4)))
+
+        breakdown = ScoreBreakdown(
+            semantic_similarity=sem_sim,
+            lexical_similarity=lex_sim,
+            keyword_overlap=key_sim,
+            structural_similarity=est_sim,
+            composite_score=composite,
+            weights=w,
+        )
+        return composite, breakdown
 
     def execute(
         self,
@@ -83,12 +141,65 @@ class CompareSyllabiUseCase:
         n_obj = len(objective_items)
         n_cmp = len(compared_items)
 
-        best_score_per_obj: Dict[str, tuple[float, Optional[ContentItem]]] = {
+        best_score_per_obj: Dict[str, Tuple[float, Optional[ContentItem]]] = {
             item.id: (0.0, None) for item in objective_items
         }
-        best_score_per_cmp: Dict[str, tuple[float, Optional[ContentItem]]] = {
+        best_score_per_cmp: Dict[str, Tuple[float, Optional[ContentItem]]] = {
             item.id: (0.0, None) for item in compared_items
         }
+
+        if n_obj == 0 or n_cmp == 0:
+            return Comparison(
+                id=comparison_id,
+                objective_syllabus_id=objective_syllabus_id,
+                compared_syllabus_id=compared_syllabus_id,
+                global_score=0.0,
+                objective_coverage=0.0,
+                compared_coverage=0.0,
+                model_version=self.model_version,
+                created_at=datetime.now(),
+                matches=[],
+                unmatched_objective=[
+                    UnmatchedItem(
+                        item_id=it.id,
+                        syllabus_id=objective_syllabus_id,
+                        section_name=it.section_name,
+                        title=it.title,
+                        text_snippet=it.text[:200],
+                        page=it.page_start,
+                    )
+                    for it in objective_items
+                ],
+                unmatched_compared=[
+                    UnmatchedItem(
+                        item_id=it.id,
+                        syllabus_id=compared_syllabus_id,
+                        section_name=it.section_name,
+                        title=it.title,
+                        text_snippet=it.text[:200],
+                        page=it.page_start,
+                    )
+                    for it in compared_items
+                ],
+            )
+
+        # Extracción y limpieza de tópicos nucleares y frases de contenido
+        def _get_item_phrases(item: ContentItem) -> Tuple[str, List[str]]:
+            core = item.title.split(" - ")[-1].strip() if " - " in item.title else item.title.strip()
+            phrases = [core] if core else []
+            if item.text:
+                raw_sentences = re.split(r'[\n;]+|(?<=[a-záéíóú0-9])\.\s+', item.text)
+                for s in raw_sentences:
+                    sc = s.strip(" .:\t\n\r-")
+                    if " - " in sc:
+                        sc = sc.split(" - ")[-1].strip()
+                    if len(sc) >= 4 and not sc.lower().startswith(('en esta unidad', 'descargado', 'downloaded', 'lomoarcpsd', 'scan to open')):
+                        if sc.lower() not in [p.lower() for p in phrases]:
+                            phrases.append(sc)
+            return core, phrases
+
+        obj_phrases_list = [_get_item_phrases(it)[1] for it in objective_items]
+        cmp_phrases_list = [_get_item_phrases(it)[1] for it in compared_items]
 
         # Precomputación vectorial y textual por lote para alto rendimiento
         obj_texts = [f"{it.title}. {it.text}".strip() for it in objective_items]
@@ -97,27 +208,42 @@ class CompareSyllabiUseCase:
         norm_obj_texts = [TextNormalizer.normalize_for_indexing(t) for t in obj_texts]
         norm_cmp_texts = [TextNormalizer.normalize_for_indexing(t) for t in cmp_texts]
 
+        core_obj_texts = [it.title.split(" - ")[-1].strip() if " - " in it.title else it.title.strip() for it in objective_items]
+        core_cmp_texts = [it.title.split(" - ")[-1].strip() if " - " in it.title else it.title.strip() for it in compared_items]
+
         sem_matrix: Optional[np.ndarray] = None
+        sem_core_matrix: Optional[np.ndarray] = None
         if hasattr(self.vector_service, "encode_texts") and n_obj > 0 and n_cmp > 0:
             try:
                 emb_obj = self.vector_service.encode_texts(obj_texts)
                 emb_cmp = self.vector_service.encode_texts(cmp_texts)
                 if emb_obj is not None and emb_cmp is not None and len(emb_obj) > 0 and len(emb_cmp) > 0:
                     sem_matrix = np.dot(emb_obj, emb_cmp.T)
+
+                emb_core_obj = self.vector_service.encode_texts(core_obj_texts)
+                emb_core_cmp = self.vector_service.encode_texts(core_cmp_texts)
+                if emb_core_obj is not None and emb_core_cmp is not None and len(emb_core_obj) > 0 and len(emb_core_cmp) > 0:
+                    sem_core_matrix = np.dot(emb_core_obj, emb_core_cmp.T)
             except Exception:
                 sem_matrix = None
+                sem_core_matrix = None
 
-        # 1. Búsqueda y evaluación de correspondencias (Objetivo -> Comparado)
-        candidates_by_obj: Dict[str, List[tuple[float, ContentItem, ScoreBreakdown, MatchEvidence]]] = {}
+        # 1. Matriz exhaustiva de afinidad y candidatos con pesos adaptativos
+        affinity_matrix = np.zeros((n_obj, n_cmp), dtype=float)
+        pair_evaluations: Dict[Tuple[int, int], Tuple[float, ScoreBreakdown, MatchEvidence]] = {}
+        candidates_by_obj: Dict[str, List[Tuple[float, ContentItem, ScoreBreakdown, MatchEvidence]]] = {
+            it.id: [] for it in objective_items
+        }
 
         for i, obj_item in enumerate(objective_items):
-            candidates_for_obj: List[tuple[float, ContentItem, ScoreBreakdown, MatchEvidence]] = []
             text_obj = obj_texts[i]
             norm_obj = norm_obj_texts[i]
+            core_obj = core_obj_texts[i]
 
             for j, cmp_item in enumerate(compared_items):
                 text_cmp = cmp_texts[j]
                 norm_cmp = norm_cmp_texts[j]
+                core_cmp = core_cmp_texts[j]
 
                 # Atajo de correspondencia exacta 100% idéntica
                 if norm_obj and norm_obj == norm_cmp:
@@ -126,14 +252,67 @@ class CompareSyllabiUseCase:
                     key_sim = 1.0
                     est_sim = 1.0
                     composite = 1.0
+                    breakdown = ScoreBreakdown(
+                        semantic_similarity=1.0,
+                        lexical_similarity=1.0,
+                        keyword_overlap=1.0,
+                        structural_similarity=1.0,
+                        composite_score=1.0,
+                        weights=w,
+                    )
                 else:
-                    if sem_matrix is not None:
-                        sem_sim = max(0.0, min(1.0, round(float(sem_matrix[i, j]), 4)))
+                    # 1. Similitud semántica multi-escala (núcleo precomputado vs texto extendido)
+                    if sem_core_matrix is not None:
+                        sem_core = max(0.0, min(1.0, round(float(sem_core_matrix[i, j]), 4)))
                     else:
-                        sem_sim = self.vector_service.compute_semantic_similarity(text_obj, text_cmp)
+                        sem_core = self.vector_service.compute_semantic_similarity(core_obj, core_cmp)
 
-                    lex_sim = self.vector_service.compute_lexical_similarity(text_obj, text_cmp)
-                    key_sim = self.vector_service.compute_keyword_overlap(text_obj, text_cmp)
+                    if sem_matrix is not None:
+                        sem_full = max(0.0, min(1.0, round(float(sem_matrix[i, j]), 4)))
+                    else:
+                        sem_full = self.vector_service.compute_semantic_similarity(text_obj, text_cmp)
+
+                    # Similitud asimétrica por sub-frases (detección de sub-tópicos y contención de conceptos)
+                    sem_phrase_max = 0.0
+                    lex_phrase_max = 0.0
+                    key_phrase_max = 0.0
+
+                    for cp in cmp_phrases_list[j]:
+                        lp = self.vector_service.compute_lexical_similarity(core_obj, cp)
+                        if lp > lex_phrase_max:
+                            lex_phrase_max = lp
+                        kp = self.vector_service.compute_keyword_overlap(core_obj, cp)
+                        if kp > key_phrase_max:
+                            key_phrase_max = kp
+                        if lp >= 0.70 or kp >= 0.65:
+                            sp = self.vector_service.compute_semantic_similarity(core_obj, cp)
+                            if sp > sem_phrase_max:
+                                sem_phrase_max = sp
+
+                    for op in obj_phrases_list[i]:
+                        lp = self.vector_service.compute_lexical_similarity(op, core_cmp)
+                        if lp > lex_phrase_max:
+                            lex_phrase_max = lp
+                        kp = self.vector_service.compute_keyword_overlap(op, core_cmp)
+                        if kp > key_phrase_max:
+                            key_phrase_max = kp
+                        if lp >= 0.70 or kp >= 0.65:
+                            sp = self.vector_service.compute_semantic_similarity(op, core_cmp)
+                            if sp > sem_phrase_max:
+                                sem_phrase_max = sp
+
+                    sem_sim = max(sem_core, sem_full, sem_phrase_max)
+
+                    # 2. Similitud léxica multi-escala (TF-IDF + contención asimétrica de conceptos)
+                    lex_core = self.vector_service.compute_lexical_similarity(core_obj, core_cmp)
+                    lex_full = self.vector_service.compute_lexical_similarity(text_obj, text_cmp)
+                    lex_sim = max(lex_core, lex_full, lex_phrase_max)
+
+                    # 3. Solapamiento de palabras clave multi-escala
+                    key_core = self.vector_service.compute_keyword_overlap(core_obj, core_cmp)
+                    key_full = self.vector_service.compute_keyword_overlap(text_obj, text_cmp)
+                    key_sim = max(key_core, key_full, key_phrase_max)
+
                     est_sim = self.vector_service.compute_structural_similarity(
                         order_a=obj_item.order,
                         total_items_a=n_obj,
@@ -143,14 +322,7 @@ class CompareSyllabiUseCase:
                         unit_b=cmp_item.unit_number,
                     )
 
-                    # Cálculo de score compuesto ponderado
-                    composite = (
-                        w["semantic"] * sem_sim
-                        + w["lexical"] * lex_sim
-                        + w["keyword"] * key_sim
-                        + w["structural"] * est_sim
-                    )
-                    composite = max(0.0, min(1.0, round(composite, 4)))
+                    composite, breakdown = self._compute_pair_score(sem_sim, lex_sim, key_sim, est_sim, w)
 
                 # Actualizar mejores scores globales para cálculo de cobertura
                 if composite > best_score_per_obj[obj_item.id][0]:
@@ -158,88 +330,84 @@ class CompareSyllabiUseCase:
                 if composite > best_score_per_cmp[cmp_item.id][0]:
                     best_score_per_cmp[cmp_item.id] = (composite, obj_item)
 
-                # Si califica al menos para análisis o revisión (score >= umbral incierto)
-                if composite >= th["uncertain"]:
-                    shared_kw = self.vector_service.extract_shared_keywords(text_obj, text_cmp)
-                    ev_type = "HYBRID" if (sem_sim > 0.6 and lex_sim > 0.4) else ("SEMANTIC" if sem_sim >= lex_sim else "LEXICAL")
+                shared_kw = self.vector_service.extract_shared_keywords(text_obj, text_cmp)
+                ev_type = (
+                    "HYBRID"
+                    if (sem_sim > 0.6 and lex_sim > 0.4)
+                    else ("SEMANTIC" if sem_sim >= lex_sim else "LEXICAL")
+                )
 
-                    breakdown = ScoreBreakdown(
-                        semantic_similarity=sem_sim,
-                        lexical_similarity=lex_sim,
-                        keyword_overlap=key_sim,
-                        structural_similarity=est_sim,
-                        composite_score=composite,
-                        weights=w,
-                    )
+                evidence = MatchEvidence(
+                    evidence_type=ev_type,
+                    shared_keywords=shared_kw,
+                    semantic_score=sem_sim,
+                    lexical_score=lex_sim,
+                    objective_snippet=obj_item.text[:220],
+                    compared_snippet=cmp_item.text[:220],
+                    objective_page=obj_item.page_start,
+                    compared_page=cmp_item.page_start,
+                )
 
-                    evidence = MatchEvidence(
-                        evidence_type=ev_type,
-                        shared_keywords=shared_kw,
-                        semantic_score=sem_sim,
-                        lexical_score=lex_sim,
-                        objective_snippet=obj_item.text[:220],
-                        compared_snippet=cmp_item.text[:220],
-                        objective_page=obj_item.page_start,
-                        compared_page=cmp_item.page_start,
-                    )
-
-                    candidates_for_obj.append((composite, cmp_item, breakdown, evidence))
+                affinity_matrix[i, j] = composite
+                pair_evaluations[(i, j)] = (composite, breakdown, evidence)
+                candidates_by_obj[obj_item.id].append((composite, cmp_item, breakdown, evidence))
 
             # Ordenar candidatos por score descendente
-            candidates_for_obj.sort(key=lambda x: x[0], reverse=True)
-            candidates_by_obj[obj_item.id] = candidates_for_obj
+            candidates_by_obj[obj_item.id].sort(key=lambda x: x[0], reverse=True)
 
-        # 2. Selección inteligente de correspondencias sin redundancia ni repetición
+        # 2. Asignación orientada a la convalidación del Sílabo Objetivo
+        # Priorizamos el mejor candidato que demuestre cobertura pedagógica del tema.
+        # Si la asignación bipartita sugiere un candidato alternativo libre con afinidad sólida
+        # (score a menos de 0.04 del mejor y score >= th['partial']), se diversifica.
+        cost_matrix = 1.0 - affinity_matrix
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
+        bipartite_matches = dict(zip(row_ind, col_ind))
+
         cmp_usage_count: Dict[str, int] = {}
         seen_pairs: Set[Tuple[str, str]] = set()
+        primary_match_by_obj: Dict[str, Tuple[float, ContentItem, ScoreBreakdown, MatchEvidence]] = {}
 
-        for obj_item in objective_items:
+        # Para cada ítem del objetivo, determinar su correspondencia más sólida:
+        for i, obj_item in enumerate(objective_items):
             cands = candidates_by_obj.get(obj_item.id, [])
             if not cands:
                 continue
 
-            # Prioridad 1: Candidato no utilizado previamente (usage == 0) para evitar redundancias
-            # Prioridad 2: Si no hay candidato libre disponible con afinidad, permitir reutilización (usage < 2)
-            primary_cand = None
-            for cand in cands:
-                score, cmp_item, breakdown, evidence = cand
-                has_content_affinity = (
-                    breakdown.semantic_similarity >= 0.40
-                    or breakdown.lexical_similarity >= 0.25
-                    or breakdown.keyword_overlap >= 0.15
-                )
-                if not has_content_affinity:
-                    continue
-                pair_key = (obj_item.id, cmp_item.id)
-                if pair_key in seen_pairs:
-                    continue
-                if cmp_usage_count.get(cmp_item.id, 0) == 0:
-                    primary_cand = cand
-                    break
+            best_cand = cands[0]  # Mejor candidato absoluto por afinidad
+            best_score = best_cand[0]
 
-            if primary_cand is None:
-                for cand in cands:
-                    score, cmp_item, breakdown, evidence = cand
-                    has_content_affinity = (
-                        breakdown.semantic_similarity >= 0.40
-                        or breakdown.lexical_similarity >= 0.25
-                        or breakdown.keyword_overlap >= 0.15
-                    )
-                    if not has_content_affinity:
-                        continue
-                    pair_key = (obj_item.id, cmp_item.id)
-                    if pair_key in seen_pairs:
-                        continue
-                    if cmp_usage_count.get(cmp_item.id, 0) < 2:
-                        primary_cand = cand
-                        break
+            chosen_cand = best_cand
 
-            if primary_cand is None:
+            # Diversificación controlada solo si la alternativa bipartita no degrada la convalidación
+            if i in bipartite_matches:
+                j_bip = bipartite_matches[i]
+                bip_score = affinity_matrix[i, j_bip]
+                bip_eval = pair_evaluations[(i, j_bip)]
+                if bip_score >= (best_score - 0.04) and bip_score >= th["partial"]:
+                    chosen_cand = (bip_score, compared_items[j_bip], bip_eval[1], bip_eval[2])
+
+            chosen_score, chosen_cmp, chosen_bd, chosen_ev = chosen_cand
+            has_content_affinity = (
+                chosen_bd.semantic_similarity >= 0.40
+                or chosen_bd.lexical_similarity >= 0.25
+                or chosen_bd.keyword_overlap >= 0.15
+            )
+
+            if chosen_score >= th["uncertain"] and has_content_affinity:
+                primary_match_by_obj[obj_item.id] = chosen_cand
+                cmp_usage_count[chosen_cmp.id] = cmp_usage_count.get(chosen_cmp.id, 0) + 1
+                seen_pairs.add((obj_item.id, chosen_cmp.id))
+
+        # 4. Creación formal de matches primarios y evaluación de correspondencias 1:N
+        for obj_item in objective_items:
+            primary = primary_match_by_obj.get(obj_item.id)
+            if not primary:
                 continue
 
-            score, cmp_item, breakdown, evidence = primary_cand
+            score, cmp_item, breakdown, evidence = primary
             usage = cmp_usage_count.get(cmp_item.id, 0)
             pair_key = (obj_item.id, cmp_item.id)
+            cands = candidates_by_obj.get(obj_item.id, [])
             has_content_affinity = (
                 breakdown.semantic_similarity >= 0.40
                 or breakdown.lexical_similarity >= 0.25
@@ -277,6 +445,9 @@ class CompareSyllabiUseCase:
                         evidence_type=evidence.evidence_type,
                     )
 
+            actual_obj_page = obj_regions[0].page_number if obj_regions else obj_item.page_start
+            actual_cmp_page = cmp_regions[0].page_number if cmp_regions else cmp_item.page_start
+
             enriched_evidence = MatchEvidence(
                 evidence_type=evidence.evidence_type,
                 shared_keywords=evidence.shared_keywords,
@@ -284,8 +455,8 @@ class CompareSyllabiUseCase:
                 lexical_score=evidence.lexical_score,
                 objective_snippet=evidence.objective_snippet,
                 compared_snippet=evidence.compared_snippet,
-                objective_page=evidence.objective_page,
-                compared_page=evidence.compared_page,
+                objective_page=actual_obj_page,
+                compared_page=actual_cmp_page,
                 objective_regions=obj_regions,
                 compared_regions=cmp_regions,
             )
@@ -300,8 +471,8 @@ class CompareSyllabiUseCase:
                     compared_title=cmp_item.title,
                     objective_section=obj_item.section_name,
                     compared_section=cmp_item.section_name,
-                    objective_page=obj_item.page_start,
-                    compared_page=cmp_item.page_start,
+                    objective_page=actual_obj_page,
+                    compared_page=actual_cmp_page,
                     score_breakdown=breakdown,
                     classification=classification,
                     evidence=enriched_evidence,
@@ -380,6 +551,9 @@ class CompareSyllabiUseCase:
                             evidence_type=sec_evidence.evidence_type,
                         )
 
+                sec_actual_obj_page = sec_obj_regions[0].page_number if sec_obj_regions else obj_item.page_start
+                sec_actual_cmp_page = sec_cmp_regions[0].page_number if sec_cmp_regions else sec_cmp.page_start
+
                 sec_enriched_evidence = MatchEvidence(
                     evidence_type=sec_evidence.evidence_type,
                     shared_keywords=sec_evidence.shared_keywords,
@@ -387,8 +561,8 @@ class CompareSyllabiUseCase:
                     lexical_score=sec_evidence.lexical_score,
                     objective_snippet=sec_evidence.objective_snippet,
                     compared_snippet=sec_evidence.compared_snippet,
-                    objective_page=sec_evidence.objective_page,
-                    compared_page=sec_evidence.compared_page,
+                    objective_page=sec_actual_obj_page,
+                    compared_page=sec_actual_cmp_page,
                     objective_regions=sec_obj_regions,
                     compared_regions=sec_cmp_regions,
                 )
@@ -403,8 +577,8 @@ class CompareSyllabiUseCase:
                         compared_title=sec_cmp.title,
                         objective_section=obj_item.section_name,
                         compared_section=sec_cmp.section_name,
-                        objective_page=obj_item.page_start,
-                        compared_page=sec_cmp.page_start,
+                        objective_page=sec_actual_obj_page,
+                        compared_page=sec_actual_cmp_page,
                         score_breakdown=sec_breakdown,
                         classification=sec_classification,
                         evidence=sec_enriched_evidence,
@@ -458,13 +632,24 @@ class CompareSyllabiUseCase:
                 )
 
         # 4. Cálculo de Cobertura Bidireccional
-        obj_cov = round((len(covered_objective_ids) / max(1, n_obj)) * 100.0, 1)
-        cmp_cov = round((len(covered_compared_ids) / max(1, n_cmp)) * 100.0, 1)
+        # Si existen contenidos clasificados en unidades temáticas (unit_number > 0),
+        # la cobertura formativa se computa sobre estos temas analíticos curriculares.
+        curr_obj_items = [it for it in objective_items if it.unit_number and it.unit_number > 0]
+        curr_cmp_items = [it for it in compared_items if it.unit_number and it.unit_number > 0]
+
+        eff_obj_items = curr_obj_items if curr_obj_items else objective_items
+        eff_cmp_items = curr_cmp_items if curr_cmp_items else compared_items
+
+        eff_covered_obj = len(covered_objective_ids.intersection({it.id for it in eff_obj_items}))
+        eff_covered_cmp = len(covered_compared_ids.intersection({it.id for it in eff_cmp_items}))
+
+        obj_cov = round((eff_covered_obj / max(1, len(eff_obj_items))) * 100.0, 1)
+        cmp_cov = round((eff_covered_cmp / max(1, len(eff_cmp_items))) * 100.0, 1)
 
         # 5. Porcentaje Global de Correspondencia Estimada
-        # Ponderación basada en promedio de mejores scores de cobertura del objetivo
-        sum_best_obj = sum(best_score_per_obj[it.id][0] for it in objective_items)
-        global_score = round(sum_best_obj / max(1, n_obj), 4)
+        # Ponderación basada en promedio de mejores scores de cobertura del temario analítico del objetivo
+        sum_best_obj = sum(best_score_per_obj[it.id][0] for it in eff_obj_items)
+        global_score = round(sum_best_obj / max(1, len(eff_obj_items)), 4)
 
         comparison = Comparison(
             id=comparison_id,

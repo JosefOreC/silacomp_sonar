@@ -138,12 +138,28 @@ export const PdfDocumentViewer: React.FC<PdfDocumentViewerProps> = ({
         height: Math.floor(viewport.height),
       });
       renderTaskRef.current = null;
+
+      // Auto-centrar suavemente en la primera evidencia de esta página si existe
+      const pageEvidences = regions.filter((r) => r.page_number === pageNumber);
+      if (pageEvidences.length > 0 && containerRef.current) {
+        const firstEvidence = pageEvidences[0];
+        const scaleY = firstEvidence.page_height > 0 ? viewport.height / firstEvidence.page_height : 1;
+        const targetScrollY = Math.max(0, firstEvidence.y0 * scaleY - 60);
+        setTimeout(() => {
+          if (containerRef.current) {
+            containerRef.current.scrollTo({
+              top: targetScrollY,
+              behavior: 'smooth',
+            });
+          }
+        }, 100);
+      }
     } catch (err: any) {
       if (err?.name !== 'RenderingCancelledException') {
         console.error('[PdfDocumentViewer] Error al renderizar página:', err);
       }
     }
-  }, [pdfDoc, pageNumber, totalPages, scale, fitMode]);
+  }, [pdfDoc, pageNumber, totalPages, scale, fitMode, regions]);
 
   useEffect(() => {
     renderPage();
