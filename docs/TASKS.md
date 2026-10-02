@@ -609,9 +609,18 @@
   - Suite completa de **40 pruebas automatizadas pasando al 100%** en `pytest` (41 s).
   - Compilación frontend de producción (`npm run build`) limpia en 565 ms con 0 errores de TypeScript.
   - `TASK-AI-UNIV-01`: Implementación de Contención Direccional Asimétrica (`compute_asymmetric_containment`) y Coeficiente de Szymkiewicz-Simpson en [vector_service.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/app/infrastructure/nlp/vector_service.py), eliminando el sesgo de longitud en cualquier disciplina académica.
-  - `TASK-AI-UNIV-02`: Enriquecimiento jerárquico universal en [segmenter.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/app/infrastructure/nlp/segmenter.py), incorporando linaje temático multilínea (`course_name` + `unit_theme` + `item.text`) para todas las materias.
-  - `TASK-AI-UNIV-03`: Arquitectura de correspondencia centrada en el Sílabo Objetivo en [compare_syllabi.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/app/application/compare_syllabi.py), permitiendo la subsunción válida Muchos-a-Uno cuando un bloque comprensivo del comparado satisface a múltiples tópicos del objetivo.
+  - `TASK-AI-UNIV-02`: Descomposición granular asimétrica multi-frase (`_get_item_phrases`) y evaluación cruzada en [compare_syllabi.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/app/application/compare_syllabi.py), detectando sub-tópicos independientes dentro de párrafos extensos.
+  - `TASK-AI-UNIV-03`: Calibración de umbrales pedagógicos de convalidación universitaria (`MATCH >= 0.75`, `PARTIAL_MATCH >= 0.58`, `UNCERTAIN >= 0.45`) con piso representativo ($\ge 0.80$) ante contención léxica directa ($\ge 0.85$).
   - `TASK-AI-UNIV-04`: Prueba unitaria universal de convalidación orientada al objetivo (`test_target_driven_subsumption_universal_coverage`) en [test_compare_syllabi_use_case.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/tests/unit/test_compare_syllabi_use_case.py).
+  - `TASK-AI-UNIV-05`: Resincronización y actualización retroactiva en `convcomp.db` con [resync_and_recompare_syllabi.py](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/backend/scripts/resync_and_recompare_syllabi.py).
+- **Resultados de Validación:**
+  - Suite completa de **40 pruebas automatizadas pasando al 100%** en `pytest` (41 s).
+  - Compilación frontend de producción (`npm run build`) limpia en 368 ms con 0 errores de TypeScript.
+  - **Métricas Reales en Caso Real (Continental vs UTP):**
+    - Score Global: de 0.59 inicial a **0.8905** (homologabilidad académica sólida).
+    - Cobertura Objetivo: de 38.9% inicial a **100.0%** (16/16 temas formativos del sílabo objetivo convalidados exitosamente).
+    - Cero falsos negativos: temas como "Capa de aplicación", "Fundamentos de seguridad en redes", "Configuración básica de router", "Sistemas numéricos" y "Resolución de redireccionamiento (ARP)" ahora clasificados con evidencia localizada completa.
+---
 
 
 
