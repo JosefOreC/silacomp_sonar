@@ -16,13 +16,15 @@ class ReportFormat(str, Enum):
 @dataclass(frozen=True)
 class ModelVersion:
     """Representa una configuración o versión de algoritmo registrada para reproducibilidad."""
-    version_id: str  # Ej: "baseline-001"
-    algorithm_name: str  # Ej: "Hybrid-TfIdf-SentenceTransformer"
+    version_id: str  # Ej: "baseline-001" o "supervised-logistic-001"
+    algorithm_name: str  # Ej: "CalibratedLogisticRegression" o "RandomForest"
     description: str
-    parameters: Dict[str, Any]  # Pesos de features, modelos base, etc.
+    parameters: Dict[str, Any]  # Hiperparámetros, pesos, regularización
     thresholds: Dict[str, float]  # Umbrales para MATCH, PARTIAL_MATCH, UNCERTAIN
     is_active: bool
     created_at: datetime
+    metrics: Dict[str, Any] = field(default_factory=dict)
+    artifact_path: Optional[str] = None
 
 
 @dataclass

@@ -29,10 +29,11 @@ class ProcessSyllabusUseCase:
         university: Optional[str] = None,
         course_name: Optional[str] = None,
         course_code: Optional[str] = None,
+        enable_ocr: bool = True,
     ) -> tuple[Syllabus, List[ContentItem]]:
         """
         Ejecuta el flujo completo de ingesta:
-        1. Extracción con PyMuPDF (lanza excepción si es escaneado sin texto).
+        1. Extracción con PyMuPDF (con soporte para OCR en Fase 2).
         2. Detección heurística de estructura y secciones.
         3. Segmentación en ítems temáticos discretos con normalización.
         4. Persistencia en repositorio si está configurado.
@@ -42,6 +43,7 @@ class ProcessSyllabusUseCase:
             file_path=file_path,
             syllabus_id=syllabus_id,
             filename=filename,
+            enable_ocr=enable_ocr,
         )
         if university:
             syllabus.university = university

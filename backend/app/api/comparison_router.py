@@ -8,9 +8,13 @@ from fastapi.responses import FileResponse, HTMLResponse
 
 from app.api.deps import (
     get_comparison_repository,
+    get_model_inference_service,
+    get_model_repository,
     get_syllabus_repository,
     get_vector_service,
 )
+from app.infrastructure.ml.model_inference_service import ModelInferenceService
+from app.infrastructure.persistence.sqlite_model_repository import SqliteModelVersionRepository
 from app.infrastructure.reports.html_report_generator import HtmlReportGenerator
 from app.infrastructure.reports.pdf_report_generator import PdfReportGenerator
 from app.api.schemas import (
@@ -140,6 +144,8 @@ def create_comparison(
     syl_repo: SqliteSyllabusRepository = Depends(get_syllabus_repository),
     comp_repo: SqliteComparisonRepository = Depends(get_comparison_repository),
     vector_service: NlpVectorService = Depends(get_vector_service),
+    model_repo: SqliteModelVersionRepository = Depends(get_model_repository),
+    inference_service: ModelInferenceService = Depends(get_model_inference_service),
 ) -> ComparisonResponse:
     """
     Ejecuta el análisis de correspondencia explicable entre dos sílabos previamente cargados.
@@ -173,9 +179,14 @@ def create_comparison(
             detail="El sílabo comparado no contiene contenidos temáticos identificables.",
         )
 
+    active_model = model_repo.get_active_model()
+    model_version_id = active_model.version_id if active_model else "bipartite-adaptive-002"
+
     use_case = CompareSyllabiUseCase(
         vector_service=vector_service,
         comparison_repository=comp_repo,
+        model_version=model_version_id,
+        inference_service=inference_service,
     )
 
     comparison = use_case.execute(

@@ -49,11 +49,13 @@ class CompareSyllabiUseCase:
         comparison_repository: Optional[IComparisonRepository] = None,
         spatial_locator: Optional[SpatialLocatorService] = None,
         model_version: str = "bipartite-adaptive-002",
+        inference_service: Optional[object] = None,
     ) -> None:
         self.vector_service = vector_service
         self.repository = comparison_repository
         self.spatial_locator = spatial_locator or SpatialLocatorService()
         self.model_version = model_version
+        self.inference_service = inference_service
 
     def _compute_pair_score(
         self,

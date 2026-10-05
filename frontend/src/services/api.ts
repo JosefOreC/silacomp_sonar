@@ -5,10 +5,13 @@
 import type {
   Comparison,
   ComparisonEvidenceCatalog,
+  DatasetStats,
   HumanReviewPayload,
   HumanReviewResponse,
   MatchSpatialEvidence,
+  ModelVersion,
   Syllabus,
+  TrainModelRequest,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
@@ -98,7 +101,7 @@ export const api = {
   /**
    * Obtiene el historial de comparaciones ejecutadas.
    */
-  async listComparisons(): Promise<any[]> {
+  async listComparisons(): Promise<unknown[]> {
     const res = await fetch(`${API_BASE_URL}/comparisons`);
     if (!res.ok) throw new Error('Error al obtener lista de comparaciones');
     return res.json();
@@ -107,7 +110,7 @@ export const api = {
   /**
    * Obtiene estadísticas del dataset de calibración.
    */
-  async getDatasetStats(): Promise<any> {
+  async getDatasetStats(): Promise<DatasetStats> {
     const res = await fetch(`${API_BASE_URL}/dataset/statistics`);
     if (!res.ok) throw new Error('Error al obtener estadísticas del dataset');
     return res.json();
@@ -158,5 +161,68 @@ export const api = {
     if (!res.ok) throw new Error('Error al obtener evidencia de la correspondencia');
     return res.json();
   },
-};
 
+  // ─── Fase 2.0: Gestión de Modelos de Aprendizaje Supervisado ──────────────
+
+  /**
+   * Lista todas las versiones de modelos registradas (o el baseline por defecto).
+   */
+  async listModels(): Promise<ModelVersion[]> {
+    const res = await fetch(`${API_BASE_URL}/models`);
+    if (!res.ok) throw new Error('Error al obtener lista de modelos');
+    return res.json();
+  },
+
+  /**
+   * Obtiene el modelo activo actualmente en inferencia de producción.
+   */
+  async getActiveModel(): Promise<ModelVersion> {
+    const res = await fetch(`${API_BASE_URL}/models/active`);
+    if (!res.ok) throw new Error('Error al obtener el modelo activo');
+    return res.json();
+  },
+
+  /**
+   * Dispara un ciclo de entrenamiento supervisado sobre el dataset acumulado.
+   */
+  async trainModel(request: TrainModelRequest): Promise<ModelVersion> {
+    const res = await fetch(`${API_BASE_URL}/models/train`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Error al entrenar modelo' }));
+      throw new Error(err.detail || 'Error durante el entrenamiento del modelo supervisado');
+    }
+    return res.json();
+  },
+
+  /**
+   * Activa una versión de modelo existente para producción.
+   */
+  async activateModel(versionId: string): Promise<{ status: string; message: string }> {
+    const res = await fetch(`${API_BASE_URL}/models/${versionId}/activate`, { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Error al activar modelo' }));
+      throw new Error(err.detail || 'Error al activar la versión de modelo');
+    }
+    return res.json();
+  },
+
+  /**
+   * Obtiene las métricas científicas detalladas de una versión de modelo.
+   */
+  async getModelEvaluation(versionId: string): Promise<Record<string, unknown>> {
+    const res = await fetch(`${API_BASE_URL}/models/${versionId}/evaluation`);
+    if (!res.ok) throw new Error('Error al obtener evaluación del modelo');
+    return res.json();
+  },
+
+  /**
+   * Retorna la URL de exportación del dataset en formato específico.
+   */
+  getDatasetExportFormatUrl(format: 'json' | 'csv'): string {
+    return `${API_BASE_URL}/dataset/export?format=${format}`;
+  },
+};

@@ -135,11 +135,40 @@ class DatabaseManager:
             );
             """)
 
-            # Migraciones no destructivas para Fase 1.5
+            # Migraciones no destructivas para Fase 1.5 y 2.0
             try:
                 cursor.execute("ALTER TABLE content_matches ADD COLUMN evidence_regions_json TEXT;")
             except sqlite3.OperationalError:
                 pass
+
+            try:
+                cursor.execute("ALTER TABLE syllabi ADD COLUMN is_scanned INTEGER DEFAULT 0;")
+            except sqlite3.OperationalError:
+                pass
+
+            try:
+                cursor.execute("ALTER TABLE syllabi ADD COLUMN ocr_applied INTEGER DEFAULT 0;")
+            except sqlite3.OperationalError:
+                pass
+
+            try:
+                cursor.execute("ALTER TABLE syllabi ADD COLUMN ocr_engine_name TEXT;")
+            except sqlite3.OperationalError:
+                pass
+
+            # Tabla de Versiones de Modelos y Algoritmos (Fase 2.0)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS model_versions (
+                version_id TEXT PRIMARY KEY,
+                algorithm_name TEXT NOT NULL,
+                description TEXT NOT NULL,
+                parameters_json TEXT NOT NULL,
+                thresholds_json TEXT NOT NULL,
+                metrics_json TEXT NOT NULL,
+                is_active INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL
+            );
+            """)
 
 
             # Contenidos no correspondidos (brechas en ambos sentidos)

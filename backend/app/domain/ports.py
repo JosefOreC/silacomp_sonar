@@ -4,7 +4,8 @@ Define los contratos que debe implementar la capa de infraestructura.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 from app.domain.syllabus import Syllabus
 from app.domain.content import ContentItem
 from app.domain.comparison import Comparison, ContentMatch, ScoreBreakdown, MatchEvidence
@@ -12,11 +13,35 @@ from app.domain.review import Review, DatasetExample
 from app.domain.model_version import ModelVersion, Report, ReportFormat
 
 
+@dataclass(frozen=True)
+class OCRTextBlock:
+    """Bloque de texto reconocido por OCR con coordenadas normalizadas en puntos tipográficos (72 DPI)."""
+    text: str
+    confidence: float
+    x0: float
+    y0: float
+    x1: float
+    y1: float
+
+
+class IOCREngine(ABC):
+    """Puerto para motores de reconocimiento óptico de caracteres (OCR)."""
+
+    @abstractmethod
+    def extract_page_ocr(self, pdf_path: str, page_number: int, dpi: int = 150) -> Tuple[str, List[OCRTextBlock], float, float]:
+        """
+        Ejecuta OCR sobre una página de un documento PDF.
+        Retorna:
+          (texto_completo, lista_bloques_con_coords_72dpi, page_width_pt, page_height_pt)
+        """
+        pass
+
+
 class ISyllabusExtractor(ABC):
     """Puerto para extractores de texto de documentos PDF."""
 
     @abstractmethod
-    def extract_from_pdf(self, file_path: str, syllabus_id: str, filename: str) -> Syllabus:
+    def extract_from_pdf(self, file_path: str, syllabus_id: str, filename: str, enable_ocr: bool = True) -> Syllabus:
         """Extrae el contenido textual y las páginas de un archivo PDF."""
         pass
 
@@ -118,4 +143,45 @@ class IReportGenerator(ABC):
 
     @abstractmethod
     def generate(self, comparison: Comparison, obj_syllabus: Syllabus, cmp_syllabus: Syllabus, report_format: ReportFormat) -> Report:
+        pass
+
+
+class IModelVersionRepository(ABC):
+    """Puerto para persistencia y gestión de ciclo de vida de versiones de modelos de ML."""
+
+    @abstractmethod
+    def save(self, model_version: ModelVersion) -> None:
+        pass
+
+    @abstractmethod
+    def get_by_id(self, version_id: str) -> Optional[ModelVersion]:
+        pass
+
+    @abstractmethod
+    def get_active_model(self) -> Optional[ModelVersion]:
+        pass
+
+    @abstractmethod
+    def set_active_model(self, version_id: str) -> bool:
+        pass
+
+    @abstractmethod
+    def list_all(self) -> List[ModelVersion]:
+        pass
+
+
+class ISupervisedModelTrainer(ABC):
+    """Puerto para entrenamiento, calibración y evaluación de modelos supervisados."""
+
+    @abstractmethod
+    def train_and_evaluate(
+        self,
+        examples: List[DatasetExample],
+        algorithm: str = "calibrated_logistic",
+        test_size: float = 0.2,
+        random_state: int = 42,
+    ) -> Tuple[ModelVersion, Dict[str, Any]]:
+        """
+        Entrena el modelo sobre los ejemplos, evalúa métricas vs baseline y retorna la versión registrada con su reporte de métricas.
+        """
         pass

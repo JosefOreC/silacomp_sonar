@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface HeaderProps {
-  currentTab: 'upload' | 'dashboard' | 'results' | 'dataset';
-  onSelectTab: (tab: 'upload' | 'dashboard' | 'results' | 'dataset') => void;
+  currentTab: 'upload' | 'dashboard' | 'results' | 'dataset' | 'models';
+  onSelectTab: (tab: 'upload' | 'dashboard' | 'results' | 'dataset' | 'models') => void;
   hasActiveComparison: boolean;
   onOpenGuide?: () => void;
 }
@@ -76,6 +76,14 @@ export const Header: React.FC<HeaderProps> = ({ currentTab, onSelectTab, hasActi
               style={{ fontSize: '12px', padding: '6px 14px' }}
             >
               Registro de Auditoría
+            </button>
+            <button
+              id="nav-tab-models"
+              onClick={() => onSelectTab('models')}
+              className={`btn ${currentTab === 'models' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ fontSize: '12px', padding: '6px 14px' }}
+            >
+              Modelos IA
             </button>
             {onOpenGuide && (
               <button

@@ -29,13 +29,14 @@ async def upload_syllabus(
     university: Optional[str] = Form(None),
     course_name: Optional[str] = Form(None),
     course_code: Optional[str] = Form(None),
+    enable_ocr: bool = Form(True),
     extractor: PyMuPdfExtractor = Depends(get_syllabus_extractor),
     segmenter: SyllabusSegmenter = Depends(get_syllabus_segmenter),
     repo: SqliteSyllabusRepository = Depends(get_syllabus_repository),
 ) -> SyllabusResponse:
     """
     Recibe un documento de sílabo en formato PDF, valida su legibilidad digital,
-    extrae el texto conservando trazabilidad de páginas y segmenta sus contenidos.
+    extrae el texto conservando trazabilidad de páginas (con OCR si es escaneado) y segmenta sus contenidos.
     """
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(
@@ -67,6 +68,7 @@ async def upload_syllabus(
             university=university,
             course_name=course_name,
             course_code=course_code,
+            enable_ocr=enable_ocr,
         )
 
         # Persistir los ítems segmentados
@@ -83,6 +85,9 @@ async def upload_syllabus(
             course_code=syllabus.course_code,
             total_characters=syllabus.total_characters,
             created_at=syllabus.created_at,
+            is_scanned=syllabus.is_scanned,
+            ocr_applied=syllabus.ocr_applied,
+            ocr_engine_name=syllabus.ocr_engine_name,
         )
 
     except InsufficientDigitalTextError as e:
@@ -115,6 +120,9 @@ def list_syllabi(repo: SqliteSyllabusRepository = Depends(get_syllabus_repositor
             course_code=s.course_code,
             total_characters=s.total_characters,
             created_at=s.created_at,
+            is_scanned=s.is_scanned,
+            ocr_applied=s.ocr_applied,
+            ocr_engine_name=s.ocr_engine_name,
         )
         for s in syllabi
     ]
@@ -137,6 +145,9 @@ def get_syllabus(syllabus_id: str, repo: SqliteSyllabusRepository = Depends(get_
         course_code=s.course_code,
         total_characters=s.total_characters,
         created_at=s.created_at,
+        is_scanned=s.is_scanned,
+        ocr_applied=s.ocr_applied,
+        ocr_engine_name=s.ocr_engine_name,
     )
 
 

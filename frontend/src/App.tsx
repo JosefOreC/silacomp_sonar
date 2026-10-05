@@ -10,11 +10,12 @@ import { ReviewModal } from './components/ReviewModal';
 import { AuditDatasetView } from './components/AuditDatasetView';
 import { SupportGuideModal } from './components/SupportGuideModal';
 import { DualPdfViewer } from './components/DualPdfViewer';
+import { ModelManagementView } from './components/ModelManagementView';
 import { api } from './services/api';
 import type { Comparison, ContentMatch, MatchClassification, Syllabus } from './types';
 
 export const App: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<'upload' | 'dashboard' | 'results' | 'dataset'>('upload');
+  const [currentTab, setCurrentTab] = useState<'upload' | 'dashboard' | 'results' | 'dataset' | 'models'>('upload');
   const [syllabi, setSyllabi] = useState<Syllabus[]>([]);
   const [activeComparison, setActiveComparison] = useState<Comparison | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<ContentMatch | null>(null);
@@ -140,6 +141,8 @@ export const App: React.FC = () => {
         )}
 
         {currentTab === 'dataset' && <AuditDatasetView />}
+
+        {currentTab === 'models' && <ModelManagementView />}
       </main>
 
       {/* Visor Pericial Doble PDF (Fase 1.5) */}

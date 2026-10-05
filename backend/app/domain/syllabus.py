@@ -30,6 +30,7 @@ class SyllabusPage:
     character_count: int
     page_width: float = 0.0
     page_height: float = 0.0
+    is_ocr: bool = False
 
     def __post_init__(self) -> None:
         if self.page_number < 1:
@@ -64,6 +65,9 @@ class Syllabus:
     academic_term: Optional[str] = None
     pages: List[SyllabusPage] = field(default_factory=list)
     sections: List[SyllabusSection] = field(default_factory=list)
+    is_scanned: bool = False
+    ocr_applied: bool = False
+    ocr_engine_name: Optional[str] = None
 
     @property
     def full_extracted_text(self) -> str:

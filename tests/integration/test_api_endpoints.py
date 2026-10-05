@@ -49,7 +49,7 @@ def test_upload_digital_and_scanned_pdf(client: TestClient, sample_digital_pdf: 
             files={"file": ("escaneado.pdf", f, "application/pdf")},
         )
     assert res_scan.status_code == 422
-    assert "Fase 2" in res_scan.json()["detail"]
+    assert "OCR" in res_scan.json()["detail"] or "Fase 2" in res_scan.json()["detail"]
 
 
 def test_full_comparison_and_review_flow(client: TestClient, sample_digital_pdf: str) -> None:

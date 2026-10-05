@@ -40,7 +40,14 @@
 | 16. Fase 1.5: Frontend — Visor Doble y EvidenceOverlay | Completado | 100% | 4 | 4 |
 | 17. Fase 1.5: Frontend — Navegación Sincronizada y Revisión | Completado | 100% | 4 | 4 |
 | 18. Fase 1.5: Evidencias en Reportes y Pruebas E2E | Completado | 100% | 2 | 2 |
-| **TOTAL GENERAL (FASE 1.0 + FASE 1.5)** | **Completado** | **100%** | **66** | **66** |
+| **SUBTOTAL FASE 1.5** | **Completado** | **100%** | **17** | **17** |
+| 19. Fase 2.0: Ingesta con OCR para Documentos Escaneados | Completado | 100% | 4 | 4 |
+| 20. Fase 2.0: Dataset Científico y Feature Engineering | Completado | 100% | 2 | 2 |
+| 21. Fase 2.0: Modelado Supervisado y Calibración | Completado | 100% | 3 | 3 |
+| 22. Fase 2.0: Versionado y Ciclo de Vida de Modelos (API) | Completado | 100% | 3 | 3 |
+| 23. Fase 2.0: Frontend — Gestión de Modelos y Auditoría | Completado | 100% | 4 | 4 |
+| 24. Fase 2.0: Pruebas Automatizadas y Validación E2E | Completado | 100% | 3 | 3 |
+| **TOTAL GENERAL (FASE 1.0 + 1.5 + 2.0)** | **Completado** | **100%** | **85** | **85** |
 
 ---
 
@@ -188,6 +195,51 @@
 ### Paquete 18: Evidencias en Reportes y Validación E2E de Fase 1.5
 - [x] **TASK-18.1:** Extender el generador de reportes PDF formal para incorporar referencias de coordenadas y trazabilidad espacial de evidencias. *(Completado el 2026-09-24)*
 - [x] **TASK-18.2:** Pruebas automatizadas de extremo a extremo cubriendo el flujo completo de la Fase 1.5: Carga $\rightarrow$ Comparación $\rightarrow$ Visor Doble $\rightarrow$ Coordenadas $\rightarrow$ Revisión. *(Completado el 2026-09-24)*
+
+---
+
+## Desglose Granular de Tareas — Fase 2.0: OCR y Aprendizaje Supervisado con Calibración
+
+### Paquete 19: Ingesta con OCR para Documentos Escaneados
+- [x] **TASK-19.1:** Definir puerto `IOCREngine` en `domain/ports.py` y modelos de bloques OCR con texto y cajas delimitadoras `(x0, y0, x1, y1)`. *(Completado el 2026-10-04)*
+- [x] **TASK-19.2:** Implementar adaptador `RapidOcrEngine` (usando `rapidocr_onnxruntime` + renderizado PyMuPDF) con escalado a coordenadas tipográficas (72 DPI). *(Completado el 2026-10-04)*
+- [x] **TASK-19.3:** Integrar fallback y detección de PDFs escaneados en `PyMuPdfExtractor` y `ProcessSyllabusUseCase` ejecutando OCR automático, inyectando capa indexable y marcando `ocr_applied=True`. *(Completado el 2026-10-04)*
+- [x] **TASK-19.4:** Pruebas unitarias y de integración para ingesta OCR en PDFs escaneados sintetizados y validación de coordenadas para el visor (`test_ocr_engine.py`). *(Completado el 2026-10-04)*
+
+---
+
+### Paquete 20: Dataset Científico y Feature Engineering
+- [x] **TASK-20.1:** Implementar servicio de preparación de dataset (`DatasetService`): extracción de vectores multivariados $X=[s_{sem}, s_{lex}, s_{asym}, s_{struct}, s_{key}]$, balanceo de clases y partición estratificada Train/Val/Test por universidad sin data leakage. *(Completado el 2026-10-04)*
+- [x] **TASK-20.2:** Implementar endpoint para exportación formal del dataset científico acumulado (`GET /api/dataset/export?format=json|csv`). *(Completado el 2026-10-04)*
+
+---
+
+### Paquete 21: Modelado Supervisado y Calibración
+- [x] **TASK-21.1:** Definir puerto `ISupervisedModelTrainer` y entidades de modelo entrenado en dominio. *(Completado el 2026-10-04)*
+- [x] **TASK-21.2:** Implementar entrenador de modelos supervisados con `scikit-learn`: Regresión Logística regularizada con calibración de probabilidades (`CalibratedClassifierCV`) y clasificador Random Forest explicable. *(Completado el 2026-10-04)*
+- [x] **TASK-21.3:** Implementar evaluador científico de modelos (`ModelEvaluationService`) calculando $F_1$, Precisión, Recall, AUC-ROC, matriz de confusión y benchmarking contra el baseline heurístico. *(Completado el 2026-10-04)*
+
+---
+
+### Paquete 22: Versionado y Ciclo de Vida de Modelos (API & Backend)
+- [x] **TASK-22.1:** Configurar persistencia de versiones de modelos en SQLite (`model_versions`: hiperparámetros, pesos aprendidos, métricas de test y estado `ACTIVE`/`CANDIDATE`). *(Completado el 2026-10-04)*
+- [x] **TASK-22.2:** Integrar inferencia supervisada en `CompareSyllabiUseCase` con fallback adaptativo y trazabilidad del modelo activo en cada comparación. *(Completado el 2026-10-04)*
+- [x] **TASK-22.3:** Implementar endpoints REST para gestión de modelos (`GET /api/models`, `POST /api/models/train`, `POST /api/models/{id}/activate`, `GET /api/models/{id}/evaluation`). *(Completado el 2026-10-04)*
+
+---
+
+### Paquete 23: Frontend — Gestión de Modelos y Auditoría de Aprendizaje
+- [x] **TASK-23.1:** Implementar vista de gestión y auditoría de modelos `ModelManagementView.tsx` en el frontend con lista de versiones y panel de detalle. *(Completado el 2026-10-05)*
+- [x] **TASK-23.2:** Implementar visualización de métricas científicas ($F_1$, Precisión, Recall) y matriz de confusión interactiva comparativa contra el baseline. *(Completado el 2026-10-05)*
+- [x] **TASK-23.3:** Implementar controles para disparo de re-entrenamiento controlado y promoción de modelos a producción (`Activar`). *(Completado el 2026-10-05)*
+- [x] **TASK-23.4:** Integrar pestaña "Modelos IA" en navegación de `Header.tsx` con acceso desde la aplicación principal. *(Completado el 2026-10-05)*
+
+---
+
+### Paquete 24: Pruebas Automatizadas y Validación E2E de Fase 2.0
+- [x] **TASK-24.1:** Pruebas unitarias de motor OCR y precisión de bounding boxes en PyMuPDF (`test_ocr_engine.py`). *(Completado el 2026-10-04)*
+- [x] **TASK-24.2:** Pruebas unitarias de entrenamiento supervisado, cálculo de métricas y calibración probabilística (`test_supervised_model.py`). *(Completado el 2026-10-04)*
+- [x] **TASK-24.3:** Pruebas de integración E2E del ciclo de vida de modelos: Entrenamiento $\rightarrow$ Evaluación $\rightarrow$ Activación $\rightarrow$ Exportación de Dataset (`test_model_lifecycle_endpoints.py`). *(Completado el 2026-10-04)*
 
 ---
 
@@ -621,6 +673,49 @@
     - Cobertura Objetivo: de 38.9% inicial a **100.0%** (16/16 temas formativos del sílabo objetivo convalidados exitosamente).
     - Cero falsos negativos: temas como "Capa de aplicación", "Fundamentos de seguridad en redes", "Configuración básica de router", "Sistemas numéricos" y "Resolución de redireccionamiento (ARP)" ahora clasificados con evidencia localizada completa.
 ---
+
+### Sesión 17 — 2026-10-04
+- **Objetivos de la sesión:**
+  - Iniciar formalmente la **Fase 2.0 (OCR + Aprendizaje Supervisado y Calibración)**.
+  - Documentar especificación de flujo en `docs/FLUJO_FASE_2.md` y desglosar los Paquetes 19 al 24 en `docs/TASKS.md`.
+  - Implementar arquitectura de Ingesta OCR (`IOCREngine` y `RapidOcrEngine`) con escalado a coordenadas tipográficas (72 DPI) y compatibilidad total con el visor pericial de Fase 1.5.
+  - Implementar pipeline de Aprendizaje Supervisado (`DatasetService`, `SklearnSupervisedTrainer`, calibración de probabilidades y evaluación contra baseline).
+  - Implementar versionado formal de modelos (`model_versions`, `SqliteModelVersionRepository` y endpoints API).
+  - Implementar ciclo de vida completo: Entrenamiento → Evaluación científica → Activación en producción → Inferencia con fallback.
+- **Tareas completadas:**
+  - `TASK-19.1` a `TASK-19.4`: Paquete 19 — Ingesta OCR completo (`IOCREngine`, `RapidOcrEngine`, integración en `PyMuPdfExtractor`, pruebas unitarias).
+  - `TASK-20.1` a `TASK-20.2`: Paquete 20 — `DatasetService` con extracción de 5 características, exportación CSV/JSON y dataset bootstrap sintético de calibración.
+  - `TASK-21.1` a `TASK-21.3`: Paquete 21 — `SklearnSupervisedTrainer` con Regresión Logística Calibrada y Random Forest, evaluación científica con benchmarking vs baseline heurístico.
+  - `TASK-22.1` a `TASK-22.3`: Paquete 22 — `SqliteModelVersionRepository`, `ModelInferenceService`, `TrainModelUseCase` y endpoints REST completos (`/api/models`).
+  - `TASK-24.1` a `TASK-24.3`: Pruebas unitarias de OCR (`test_ocr_engine.py`), ML (`test_supervised_model.py`) e integración de ciclo de vida (`test_model_lifecycle_endpoints.py`).
+- **Resultados de Validación:**
+  - Suite de **51 pruebas automatizadas pasando al 100%** en `pytest` (81.35 s).
+
+---
+
+### Sesión 18 — 2026-10-05
+- **Objetivos de la sesión:**
+  - Completar el **Paquete 23: Frontend — Gestión de Modelos y Auditoría de Aprendizaje**.
+  - Implementar `ModelManagementView.tsx` con lista de versiones, panel de entrenamiento configurable, métricas científicas detalladas, importancia de características y matriz de confusión interactiva.
+  - Integrar la nueva pestaña "Modelos IA" en el encabezado de navegación (`Header.tsx`) y en `App.tsx`.
+  - Extender `api.ts` con métodos tipados de gestión de modelos y actualizar `types/index.ts` con las interfaces de Fase 2.0.
+  - Actualizar TASKS.md reflejando el 100% de Fase 2.0 completada.
+- **Tareas completadas:**
+  - `TASK-23.1`: [ModelManagementView.tsx](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/frontend/src/components/ModelManagementView.tsx) — Vista completa de gestión de modelos con tarjetas de versión, insignias de rendimiento y selector de detalle.
+  - `TASK-23.2`: Visualización de métricas ($F_1$, Precisión, Recall, Exactitud), importancia de características con barras y matriz de confusión con codificación por color (verde diagonal / rojo errores).
+  - `TASK-23.3`: Panel de entrenamiento configurable (algoritmo, tamaño de evaluación, bootstrap, activación automática) y botones de activación por versión.
+  - `TASK-23.4`: Pestaña "Modelos IA" integrada en navegación principal de [Header.tsx](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/frontend/src/components/Header.tsx).
+  - Extensión de [api.ts](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/frontend/src/services/api.ts): `listModels()`, `getActiveModel()`, `trainModel()`, `activateModel()`, `getModelEvaluation()`, `getDatasetExportFormatUrl()`.
+  - Extensión de [types/index.ts](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/frontend/src/types/index.ts): `ModelVersion`, `ModelMetrics`, `BaselineComparison`, `TrainModelRequest`, `DatasetStats`.
+- **Resultados de Validación:**
+  - Suite de **51 pruebas automatizadas pasando al 100%** en `pytest`.
+  - Compilación frontend de producción (`npm run build`) limpia en 1.50 s con 0 errores de TypeScript.
+  - **Fase 2.0 completada al 100%** — 85/85 tareas globales del proyecto implementadas.
+
+
+
+
+
 
 
 

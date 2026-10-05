@@ -145,3 +145,53 @@ export interface HumanReviewResponse {
   justification: string;
   created_at: string;
 }
+
+// ─── Fase 2.0: Modelos de Aprendizaje Supervisado ────────────────────────────
+
+export interface BaselineComparison {
+  baseline_accuracy: number;
+  baseline_f1_macro: number;
+  baseline_precision_macro: number;
+  baseline_recall_macro: number;
+  f1_gain: number;
+  accuracy_gain: number;
+  superior_to_baseline: boolean;
+}
+
+export interface ModelMetrics {
+  accuracy?: number;
+  f1_macro?: number;
+  f1_weighted?: number;
+  precision_macro?: number;
+  recall_macro?: number;
+  confusion_matrix?: number[][];
+  feature_importances?: Record<string, number>;
+  baseline_comparison?: BaselineComparison;
+  train_sample_count?: number;
+  test_sample_count?: number;
+  /** Para el baseline heurístico */
+  type?: string;
+}
+
+export interface ModelVersion {
+  version_id: string;
+  algorithm_name: string;
+  description: string;
+  is_active: boolean;
+  created_at: string;
+  metrics: ModelMetrics;
+  parameters: Record<string, unknown>;
+}
+
+export interface TrainModelRequest {
+  algorithm: 'calibrated_logistic' | 'random_forest';
+  test_size: number;
+  use_bootstrap: boolean;
+  auto_activate: boolean;
+}
+
+export interface DatasetStats {
+  total_examples: number;
+  by_ground_truth: Record<string, number>;
+  model_version: string;
+}

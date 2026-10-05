@@ -56,12 +56,29 @@ def list_dataset_examples(
     ]
 
 
+from fastapi.responses import Response
+from app.application.dataset_service import DatasetService
+
+
 @router.get("/export")
 def export_dataset(
+    format: str = "json",
     rev_repo: SqliteReviewRepository = Depends(get_review_repository),
-) -> List[Dict[str, Any]]:
-    """Exporta el dataset completo en JSON para el entrenamiento supervisado en Fase 2."""
+) -> Any:
+    """Exporta el dataset completo en JSON o CSV para el entrenamiento supervisado en Fase 2."""
     examples = rev_repo.list_examples(limit=10000)
+
+    # Si se solicita formato CSV
+    if format.lower() == "csv":
+        service = DatasetService(dataset_repo=rev_repo, review_repo=rev_repo)
+        csv_content = service.export_to_csv(examples)
+        return Response(
+            content=csv_content,
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=dataset_evaluaciones.csv"},
+        )
+
+    # Por defecto JSON
     exported = []
     for ex in examples:
         rev = rev_repo.get_by_id(ex.review_id) if ex.review_id else None

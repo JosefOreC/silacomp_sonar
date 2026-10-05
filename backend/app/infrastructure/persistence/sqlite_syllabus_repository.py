@@ -27,14 +27,17 @@ class SqliteSyllabusRepository(ISyllabusRepository):
                 INSERT INTO syllabi (
                     id, filename, file_path, file_size_bytes, sha256_hash,
                     total_pages, university, course_name, course_code,
-                    academic_term, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    academic_term, created_at, is_scanned, ocr_applied, ocr_engine_name
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     filename = excluded.filename,
                     university = excluded.university,
                     course_name = excluded.course_name,
                     course_code = excluded.course_code,
-                    academic_term = excluded.academic_term;
+                    academic_term = excluded.academic_term,
+                    is_scanned = excluded.is_scanned,
+                    ocr_applied = excluded.ocr_applied,
+                    ocr_engine_name = excluded.ocr_engine_name;
                 """,
                 (
                     syllabus.id,
@@ -48,6 +51,9 @@ class SqliteSyllabusRepository(ISyllabusRepository):
                     syllabus.course_code,
                     syllabus.academic_term,
                     syllabus.created_at.isoformat(),
+                    1 if syllabus.is_scanned else 0,
+                    1 if syllabus.ocr_applied else 0,
+                    syllabus.ocr_engine_name,
                 ),
             )
 
@@ -126,6 +132,9 @@ class SqliteSyllabusRepository(ISyllabusRepository):
                 academic_term=row["academic_term"],
                 pages=pages,
                 sections=sections,
+                is_scanned=bool(row["is_scanned"]) if "is_scanned" in row.keys() else False,
+                ocr_applied=bool(row["ocr_applied"]) if "ocr_applied" in row.keys() else False,
+                ocr_engine_name=row["ocr_engine_name"] if "ocr_engine_name" in row.keys() else None,
             )
 
     def list_all(self) -> List[Syllabus]:
@@ -147,6 +156,9 @@ class SqliteSyllabusRepository(ISyllabusRepository):
                     course_name=r["course_name"],
                     course_code=r["course_code"],
                     academic_term=r["academic_term"],
+                    is_scanned=bool(r["is_scanned"]) if "is_scanned" in r.keys() else False,
+                    ocr_applied=bool(r["ocr_applied"]) if "ocr_applied" in r.keys() else False,
+                    ocr_engine_name=r["ocr_engine_name"] if "ocr_engine_name" in r.keys() else None,
                 )
                 for r in rows
             ]

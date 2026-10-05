@@ -3,7 +3,7 @@ Esquemas Pydantic para serialización y validación de la API REST.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from app.domain.comparison import MatchClassification
@@ -23,6 +23,9 @@ class SyllabusResponse(BaseModel):
     course_code: Optional[str] = None
     total_characters: int
     created_at: datetime
+    is_scanned: bool = False
+    ocr_applied: bool = False
+    ocr_engine_name: Optional[str] = None
 
 
 class ContentItemResponse(BaseModel):
@@ -178,3 +181,22 @@ class DatasetStatsResponse(BaseModel):
     total_examples: int
     by_ground_truth: Dict[str, int]
     model_version: str
+
+
+# --- Modelos y Machine Learning (Fase 2.0) ---
+
+class TrainModelRequest(BaseModel):
+    algorithm: str = Field(default="calibrated_logistic", description="calibrated_logistic o random_forest")
+    test_size: float = Field(default=0.25, ge=0.1, le=0.5)
+    use_bootstrap: bool = Field(default=True, description="Usar bootstrap si los ejemplos de revisiones son pocos")
+    auto_activate: bool = Field(default=False, description="Activar automáticamente si supera al baseline")
+
+
+class ModelVersionResponse(BaseModel):
+    version_id: str
+    algorithm_name: str
+    description: str
+    is_active: bool
+    created_at: datetime
+    metrics: Dict[str, Any] = Field(default_factory=dict)
+    parameters: Dict[str, Any] = Field(default_factory=dict)
