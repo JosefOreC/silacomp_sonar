@@ -3,6 +3,7 @@ import { ZoomIn, ZoomOut, Maximize2, Minimize2, ChevronLeft, ChevronRight, Rotat
 import { pdfjsLib } from '../utils/pdfSetup';
 import { EvidenceOverlay } from './EvidenceOverlay';
 import type { EvidenceRegion, MatchClassification } from '../types';
+import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
 
 interface PdfDocumentViewerProps {
   pdfUrl: string;
@@ -27,14 +28,18 @@ export const PdfDocumentViewer: React.FC<PdfDocumentViewerProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const renderTaskRef = useRef<any>(null);
+  const renderTaskRef = useRef<RenderTask | null>(null);
 
-  const [pdfDoc, setPdfDoc] = useState<any>(null);
-  const [totalPages, setTotalPages] = useState<number>(1);
+  const [documentState, setDocumentState] = useState<{
+    url: string; doc: PDFDocumentProxy | null; error: string | null;
+  } | null>(null);
+  const currentDocument = documentState?.url === pdfUrl ? documentState : null;
+  const pdfDoc = currentDocument?.doc ?? null;
+  const totalPages = pdfDoc?.numPages ?? 1;
   const [scale, setScale] = useState<number>(1.25);
   const [fitMode, setFitMode] = useState<'width' | 'page' | 'custom'>('width');
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const loading = currentDocument === null;
+  const error = currentDocument?.error ?? null;
 
   const [canvasDimensions, setCanvasDimensions] = useState<{ width: number; height: number }>({
     width: 0,
@@ -44,8 +49,6 @@ export const PdfDocumentViewer: React.FC<PdfDocumentViewerProps> = ({
   // 1. Cargar el documento PDF original desde la URL del backend
   useEffect(() => {
     let isCancelled = false;
-    setLoading(true);
-    setError(null);
 
     const loadingTask = pdfjsLib.getDocument({
       url: pdfUrl,
@@ -54,28 +57,24 @@ export const PdfDocumentViewer: React.FC<PdfDocumentViewerProps> = ({
     });
 
     loadingTask.promise
-      .then((doc: any) => {
+      .then((doc) => {
         if (!isCancelled) {
-          setPdfDoc(doc);
-          setTotalPages(doc.numPages);
-          setLoading(false);
+          setDocumentState({ url: pdfUrl, doc, error: null });
         }
       })
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         if (!isCancelled) {
           console.error('[PdfDocumentViewer] Error al cargar PDF:', err);
-          setError('No se pudo visualizar el archivo PDF original en el servidor.');
-          setLoading(false);
+          setDocumentState({ url: pdfUrl, doc: null, error: 'No se pudo visualizar el archivo PDF original en el servidor.' });
         }
       });
 
     return () => {
       isCancelled = true;
-      try {
-        loadingTask.destroy();
-      } catch (e) {
-        // ignore
-      }
+      renderTaskRef.current?.cancel();
+      void loadingTask.destroy().catch((err: unknown) => {
+        console.warn('[PdfDocumentViewer] Error al liberar PDF:', err);
+      });
     };
   }, [pdfUrl]);
 
@@ -123,6 +122,7 @@ export const PdfDocumentViewer: React.FC<PdfDocumentViewerProps> = ({
       const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined;
 
       const renderContext = {
+        canvas,
         canvasContext: context,
         viewport,
         transform,
@@ -154,8 +154,8 @@ export const PdfDocumentViewer: React.FC<PdfDocumentViewerProps> = ({
           }
         }, 100);
       }
-    } catch (err: any) {
-      if (err?.name !== 'RenderingCancelledException') {
+    } catch (err: unknown) {
+      if (!(err instanceof Error && err.name === 'RenderingCancelledException')) {
         console.error('[PdfDocumentViewer] Error al renderizar página:', err);
       }
     }

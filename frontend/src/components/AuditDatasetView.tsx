@@ -1,28 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { CLASSIFICATIONS_ES, CORRECTIONS_ES } from '../utils/translations';
-import type { MatchClassification } from '../types';
+import { CLASSIFICATIONS_ES } from '../utils/translations';
+import type { DatasetStats, MatchClassification } from '../types';
+import { GroundTruthPanel } from './GroundTruthPanel';
+import { ActiveLearningPanel } from './ActiveLearningPanel';
 
-export const AuditDatasetView: React.FC = () => {
-  const [stats, setStats] = useState<any>(null);
+export const AuditDatasetView: React.FC<{ onOpenComparison?: (id: string) => void }> = ({ onOpenComparison }) => {
+  const [stats, setStats] = useState<DatasetStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [annotationRevision, setAnnotationRevision] = useState(0);
 
   useEffect(() => {
-    loadStats();
-  }, []);
-
-  const loadStats = async () => {
-    setLoading(true);
-    try {
-      const data = await api.getDatasetStats();
-      setStats(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar estadísticas');
-    } finally {
-      setLoading(false);
-    }
-  };
+    let cancelled = false;
+    api.getDatasetStats().then((data) => {
+      if (!cancelled) setStats(data);
+    }).catch((err: unknown) => {
+      if (!cancelled) setError(err instanceof Error ? err.message : 'Error al cargar estadísticas');
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [annotationRevision]);
 
   return (
     <div style={{ maxWidth: '1000px', margin: '30px auto', padding: '0 20px' }}>
@@ -69,28 +68,28 @@ export const AuditDatasetView: React.FC = () => {
 
             <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '0px' }}>
               <div style={{ fontSize: '32px', fontWeight: 800, color: '#34d399' }}>
-                {(stats.confirmation_rate * 100).toFixed(1)}%
+                {stats.by_ground_truth.MATCH || 0}
               </div>
               <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px', letterSpacing: '0.04em' }}>
-                Tasa de Ratificación
+                Correspondencias confirmadas
               </div>
             </div>
 
             <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '0px' }}>
               <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--accent-warning)' }}>
-                {stats.correction_distribution?.OVERESTIMATION || 0}
+                {stats.by_ground_truth.PARTIAL_MATCH || 0}
               </div>
               <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px', letterSpacing: '0.04em' }}>
-                {CORRECTIONS_ES.OVERESTIMATION.label}
+                Correspondencias parciales
               </div>
             </div>
 
             <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '0px' }}>
               <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--accent-danger)' }}>
-                {stats.correction_distribution?.FALSE_POSITIVE || 0}
+                {stats.by_ground_truth.NO_MATCH || 0}
               </div>
               <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px', letterSpacing: '0.04em' }}>
-                {CORRECTIONS_ES.FALSE_POSITIVE.label}
+                Sin correspondencia
               </div>
             </div>
           </div>
@@ -101,7 +100,7 @@ export const AuditDatasetView: React.FC = () => {
               Distribución por Dictamen Docente Definitivo
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
-              {Object.entries(stats.decision_distribution || {}).map(([dec, count]: any) => {
+              {Object.entries(stats.by_ground_truth).map(([dec, count]) => {
                 const conf = CLASSIFICATIONS_ES[dec as MatchClassification];
                 return (
                   <div key={dec} style={{ background: 'var(--bg-primary)', padding: '12px', borderRadius: '0px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
@@ -126,6 +125,8 @@ export const AuditDatasetView: React.FC = () => {
           </div>
         </div>
       ) : null}
+      <ActiveLearningPanel onOpenComparison={onOpenComparison} onAnnotationsChanged={() => setAnnotationRevision((v) => v + 1)} />
+      <GroundTruthPanel onOpenComparison={onOpenComparison} annotationRevision={annotationRevision} />
     </div>
   );
 };

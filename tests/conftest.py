@@ -4,12 +4,43 @@ Fixtures globales y compartidas para la suite de pruebas unitarias.
 
 import os
 import sys
+import tempfile
+from pathlib import Path
 
 # Asegurar que el paquete app en backend sea importable
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend")))
 
 import fitz
 import pytest
+
+
+# Configurar antes de que pytest importe app.main durante la colección:
+# el módulo inicializa el esquema y nunca debe tocar la base de desarrollo.
+_test_storage = tempfile.TemporaryDirectory(prefix="convcomp-tests-")
+os.environ["CONVCOMP_DATA_DIR"] = str(Path(_test_storage.name) / "data")
+os.environ["CONVCOMP_REPORTS_DIR"] = str(Path(_test_storage.name) / "reports")
+
+
+@pytest.fixture(autouse=True)
+def isolated_api_storage(tmp_path, monkeypatch):
+    """Cada prueba usa una base nueva, artefactos propios y dependencias sin caché."""
+    from app.api import deps
+
+    monkeypatch.setenv("CONVCOMP_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("CONVCOMP_REPORTS_DIR", str(tmp_path / "reports"))
+    cached_dependencies = (
+        deps.get_db_manager, deps.get_model_repository, deps.get_model_trainer,
+        deps.get_model_inference_service,
+    )
+    for dependency in cached_dependencies:
+        dependency.cache_clear()
+    yield
+    for dependency in cached_dependencies:
+        dependency.cache_clear()
+
+
+def pytest_unconfigure(config):
+    _test_storage.cleanup()
 
 
 @pytest.fixture

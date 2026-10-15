@@ -6,11 +6,15 @@ import type { ContentMatch, CorrectionType, MatchClassification } from '../types
 interface ViewerReviewPanelProps {
   match: ContentMatch;
   onReviewSubmitted: () => void;
+  reviewerId: string;
+  onReviewerChange: (value: string) => void;
 }
 
 export const ViewerReviewPanel: React.FC<ViewerReviewPanelProps> = ({
   match,
   onReviewSubmitted,
+  reviewerId,
+  onReviewerChange,
 }) => {
   const [decision, setDecision] = useState<MatchClassification>(match.classification);
   const [justification, setJustification] = useState<string>('');
@@ -27,6 +31,10 @@ export const ViewerReviewPanel: React.FC<ViewerReviewPanelProps> = ({
   };
 
   const handleSubmit = async () => {
+    if (!reviewerId.trim()) {
+      setStatusMessage({ type: 'error', text: 'Identifique al revisor antes de registrar la decisión.' });
+      return;
+    }
     if (decision !== match.classification && justification.trim().length < 5) {
       setStatusMessage({
         type: 'error',
@@ -46,7 +54,7 @@ export const ViewerReviewPanel: React.FC<ViewerReviewPanelProps> = ({
         human_decision: decision,
         correction_type: getCorrectionType(decision),
         justification: justification.trim() || 'Dictamen ratificado por el evaluador desde el visor PDF.',
-        reviewer_id: 'DOCENTE_EVALUADOR',
+        reviewer_id: reviewerId.trim(),
       });
 
       setStatusMessage({
@@ -55,10 +63,10 @@ export const ViewerReviewPanel: React.FC<ViewerReviewPanelProps> = ({
       });
       setJustification('');
       onReviewSubmitted();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatusMessage({
         type: 'error',
-        text: err?.message || 'Error al guardar la revisión.',
+        text: err instanceof Error ? err.message : 'Error al guardar la revisión.',
       });
     } finally {
       setSubmitting(false);
@@ -84,6 +92,10 @@ export const ViewerReviewPanel: React.FC<ViewerReviewPanelProps> = ({
       </div>
 
       <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <label style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
+          Revisor{' '}
+          <input value={reviewerId} onChange={(e) => onReviewerChange(e.target.value)} aria-label="Identificador del revisor" />
+        </label>
         {/* Botones de Selección de Dictamen */}
         <div style={{ display: 'flex', gap: '6px' }}>
           <button

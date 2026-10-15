@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { api } from '../services/api';
-import type { ModelVersion, TrainModelRequest } from '../types';
+import type { DatasetStats, ModelVersion, TrainModelRequest } from '../types';
+import { ScientificEvaluationPanel } from './ScientificEvaluationPanel';
+
+const fetchModelData = () => Promise.all([api.listModels(), api.getDatasetStats()]);
 
 // ─── Utilidades de formato ────────────────────────────────────────────────────
 
@@ -232,6 +235,16 @@ const MetricsPanel: React.FC<{ model: ModelVersion }> = ({ model }) => {
 
   return (
     <div style={{ display: 'grid', gap: '20px' }}>
+      <p style={{ color: 'var(--text-secondary)', fontSize: '12px', margin: 0 }}>
+        {m?.split?.evaluation_scope === 'synthetic'
+          ? 'Evaluación con ejemplos sintéticos. Se necesitan revisiones académicas independientes para validar el rendimiento y permitir la activación automática.'
+          : m?.split?.evaluation_scope === 'human_reviews'
+            ? 'Evaluación con revisiones humanas de grupos académicos separados del entrenamiento.'
+            : 'Esta versión no registra cómo se separaron los datos de evaluación. Reentrene para obtener una evaluación por grupos académicos.'}
+      </p>
+      {m?.ground_truth_policy && <p style={{ color: 'var(--text-secondary)', fontSize: 12, margin: 0 }}>
+        Etiquetas utilizadas: {m.ground_truth_policy === 'consensus' ? 'pares con acuerdo entre revisores' : 'revisiones individuales'}.
+      </p>}
       {/* Métricas numéricas */}
       <div>
         <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -265,6 +278,11 @@ const MetricsPanel: React.FC<{ model: ModelVersion }> = ({ model }) => {
           <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Benchmarking Frente al Baseline Heurístico
           </div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+            {bc.evaluation_unit === 'content_pair'
+              ? 'Se compara el scoring de pares de contenidos sobre las mismas muestras de evaluación. La selección de candidatos, la asignación global y las coberturas de los sílabos requieren una evaluación completa independiente.'
+              : 'Esta versión no registra el alcance del benchmark. Reentrene para compararla con el scoring adaptativo vigente.'}
+          </p>
           <div style={{
             padding: '14px 16px',
             background: bc.superior_to_baseline ? '#22c55e0a' : '#f871710a',
@@ -289,7 +307,7 @@ const MetricsPanel: React.FC<{ model: ModelVersion }> = ({ model }) => {
             </div>
             <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 600, color: bc.superior_to_baseline ? '#4ade80' : '#f87171' }}>
               {bc.superior_to_baseline
-                ? '✓ El modelo supervisado supera al baseline heurístico en las métricas de evaluación científica.'
+                ? '✓ El modelo supervisado iguala o mejora el F₁ y la exactitud del baseline en las muestras evaluadas.'
                 : '⚠ El modelo supervisado no ha superado al baseline heurístico. Se recomienda acumular más revisiones o ajustar hiperparámetros.'}
             </div>
           </div>
@@ -343,32 +361,40 @@ export const ModelManagementView: React.FC = () => {
     test_size: 0.25,
     use_bootstrap: true,
     auto_activate: false,
+    ground_truth_policy: 'consensus',
   });
   const [datasetCount, setDatasetCount] = useState<number | null>(null);
 
-  const loadModels = useCallback(async () => {
+  const applyModelData = useCallback(([modelList, stats]: [ModelVersion[], DatasetStats]) => {
+    setModels(modelList);
+    setDatasetCount(stats.total_examples);
+    setSelectedModel((previous) => modelList.find((m) => m.version_id === previous?.version_id)
+      ?? modelList.find((m) => m.is_active) ?? modelList[0] ?? null);
+  }, []);
+
+  const loadModels = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [modelList, stats] = await Promise.all([
-        api.listModels(),
-        api.getDatasetStats(),
-      ]);
-      setModels(modelList);
-      setDatasetCount(stats.total_examples);
-      if (!selectedModel && modelList.length > 0) {
-        setSelectedModel(modelList[0]);
-      }
+      applyModelData(await fetchModelData());
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al cargar los modelos');
     } finally {
       setLoading(false);
     }
-  }, [selectedModel]);
+  };
 
   useEffect(() => {
-    loadModels();
-  }, []);
+    let cancelled = false;
+    fetchModelData().then((data) => {
+      if (!cancelled) applyModelData(data);
+    }).catch((err: unknown) => {
+      if (!cancelled) setError(err instanceof Error ? err.message : 'Error al cargar los modelos');
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [applyModelData]);
 
   const handleTrain = async () => {
     setTraining(true);
@@ -496,7 +522,15 @@ export const ModelManagementView: React.FC = () => {
             </div>
 
             {/* Opciones */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
+              <label style={{ display: 'block', marginBottom: 14 }}>
+                Etiquetas para entrenamiento{' '}
+                <select value={trainForm.ground_truth_policy}
+                  onChange={(e) => setTrainForm((f) => ({ ...f, ground_truth_policy: e.target.value as TrainModelRequest['ground_truth_policy'] }))}>
+                  <option value="consensus">Solo pares con acuerdo entre revisores</option>
+                  <option value="individual">Revisiones individuales</option>
+                </select>
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
               {[
                 { key: 'use_bootstrap', label: 'Bootstrap sintético si datos escasos (<20 revisiones)' },
                 { key: 'auto_activate', label: 'Activar automáticamente si supera al baseline' },
@@ -597,8 +631,12 @@ export const ModelManagementView: React.FC = () => {
                   <p style={{ fontSize: '12px', color: 'var(--text-muted)', maxWidth: '480px', margin: '0 auto', lineHeight: 1.6 }}>
                     Este es el algoritmo determinista de comparación curricular activo. Combina asignación global bipartita (Algoritmo Húngaro), pesos adaptativos y vocabulario canónico de acrónimos técnicos. Entrenar un modelo supervisado permite sustituirlo por un clasificador calibrado probabilísticamente.
                   </p>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginTop: '20px' }}>
-                    {Object.entries(selectedModel.parameters ?? {}).slice(0, 4).map(([k, v]) => (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', marginTop: '20px' }}>
+                    {Object.entries(selectedModel.parameters ?? {}).flatMap(([group, value]) =>
+                      value !== null && typeof value === 'object' && !Array.isArray(value)
+                        ? Object.entries(value).map(([key, entry]: [string, unknown]) => [`${group} · ${key}`, entry] as const)
+                        : [[group, value] as const],
+                    ).map(([k, v]) => (
                       <div key={k} style={{ background: 'var(--bg-secondary)', padding: '10px', border: '1px solid var(--border-color)' }}>
                         <div style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'monospace', color: 'var(--text-primary)' }}>
                           {typeof v === 'number' ? v.toFixed(2) : String(v)}
@@ -624,6 +662,7 @@ export const ModelManagementView: React.FC = () => {
         </div>
       </div>
 
+      <ScientificEvaluationPanel models={models} />
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>

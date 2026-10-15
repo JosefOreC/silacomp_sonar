@@ -1,7 +1,8 @@
 # Especificación de Flujo de Trabajo — Fase 2.0
 ## Ingesta OCR y Aprendizaje Supervisado con Calibración
 
-**Versión:** 2.0  
+**Versión:** 2.1
+
 **Fecha:** Octubre 2026  
 **Documento Rector:** [PLANTEAMIENTO_IMPLEMENTACION_COMPARACION_SILABOS.md](PLANTEAMIENTO_IMPLEMENTACION_COMPARACION_SILABOS.md)  
 **Normas de Calidad:** [REGLAS_IMPLEMENTACION.md](REGLAS_IMPLEMENTACION.md)  
@@ -45,7 +46,7 @@ flowchart TD
 flowchart TD
     R[Revisiones Humanas Acumuladas] --> DE[dataset_examples]
     DE --> FE[Feature Engineering:<br/>sem_sim, lex_sim, asym_containment, struct_sim, keyword_overlap]
-    FE --> SP[División Estratificada / por Universidad<br/>Train: 70% | Val: 15% | Test: 15%]
+    FE --> SP[Grupos conectados por universidad/asignatura y sílabo<br/>Evaluación por grupos: 25% solicitado por defecto]
     SP --> TR[Entrenamiento de Modelos:<br/>Logistic Regression Calibrada + Random Forest]
     TR --> EV[Evaluación Científica Multicriterio:<br/>F1 Macro, Precisión, Recall, AUC-ROC, Matriz Confusión]
     EV --> CMP{¿Supera al Baseline<br/>en F1 y Cobertura?}
@@ -63,6 +64,13 @@ Para cada par de ítems temáticos $(c_{obj}, c_{cmp})$:
 5. $x_5$: `keyword_overlap` $\in [0, 1]$ (Jaccard de términos técnicos compartidos).
 
 ### Salida Probabilística Calibrada
+
+Desde la consolidación 2.1, compartir una fuente en cualquiera de los roles mantiene los ejemplos en el mismo grupo, incluyendo relaciones transitivas. Los registros con procedencia incompleta requieren completar universidad y asignatura de ambos sílabos antes de entrenar. Si no existen grupos independientes y clases suficientes en ambos conjuntos, se rechaza el entrenamiento. La calibración usa validación cruzada por grupos cuando es viable; en caso contrario se registra que no se aplicó calibración adicional.
+
+Los ejemplos bootstrap solo complementan entrenamiento cuando hay revisiones reales. Una ejecución exclusivamente sintética registra `evaluation_scope=synthetic` y no admite activación automática. El panel de modelos muestra el origen de la evaluación. Las métricas registran grupos, estrategia y cantidades de muestras.
+
+El benchmark reutiliza las reglas de scoring adaptativo y clasificación del dominio. Registra `evaluation_unit=content_pair`, versión del baseline y `includes_global_assignment=false`. La categoría heurística `UNCERTAIN` se agrupa con `PARTIAL_MATCH`, al igual que las etiquetas supervisadas. Este experimento no mide selección de candidatos, asignación bipartita o coberturas globales. El descriptor del baseline disponible informa `evaluation_status=not_evaluated` sin métricas estáticas; los resultados de experimentos se conservan en las versiones entrenadas.
+
 El modelo supervisado estima el vector de probabilidades:
 $$P(y = k \mid X), \quad k \in \{\text{MATCH}, \text{PARTIAL\_MATCH}, \text{NO\_MATCH}\}$$
 permitiendo cuantificar la certidumbre de la clasificación y alimentar el muestreo activo de la Fase 3.

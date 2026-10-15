@@ -18,7 +18,8 @@ def test_health_check(client: TestClient) -> None:
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "healthy"
-    assert data["phase"] == 1
+    assert data["phase"] == 3
+    assert data["version"] == client.get("/openapi.json").json()["info"]["version"]
 
 
 def test_upload_digital_and_scanned_pdf(client: TestClient, sample_digital_pdf: str, blank_scanned_pdf: str) -> None:

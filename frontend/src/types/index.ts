@@ -112,6 +112,19 @@ export interface Comparison {
   counts: Record<MatchClassification, number>;
 }
 
+export interface ComparisonSummary {
+  id: string;
+  objective_course: string | null;
+  compared_course: string | null;
+  objective_university: string | null;
+  compared_university: string | null;
+  global_score: number;
+  objective_coverage: number;
+  compared_coverage: number;
+  model_version: string;
+  created_at: string;
+}
+
 export interface Syllabus {
   id: string;
   filename: string;
@@ -149,6 +162,10 @@ export interface HumanReviewResponse {
 // ─── Fase 2.0: Modelos de Aprendizaje Supervisado ────────────────────────────
 
 export interface BaselineComparison {
+  baseline_version?: string;
+  evaluation_unit?: 'content_pair';
+  includes_global_assignment?: boolean;
+  uncertain_label_mapping?: string;
   baseline_accuracy: number;
   baseline_f1_macro: number;
   baseline_precision_macro: number;
@@ -159,6 +176,21 @@ export interface BaselineComparison {
 }
 
 export interface ModelMetrics {
+  data_provenance_schema?: number;
+  ground_truth_policy?: 'individual' | 'consensus';
+  source_review_ids?: string[];
+  split?: {
+    strategy: 'synthetic_stratified' | 'academic_connected_groups';
+    evaluation_scope: 'synthetic' | 'human_reviews';
+    eligible_for_auto_activation: boolean;
+    train_groups?: number[];
+    test_groups?: number[];
+    synthetic_train_count?: number;
+    synthetic_test_count?: number;
+    train_example_ids?: string[];
+    test_example_ids?: string[];
+  };
+  calibration_method?: string;
   accuracy?: number;
   f1_macro?: number;
   f1_weighted?: number;
@@ -188,10 +220,181 @@ export interface TrainModelRequest {
   test_size: number;
   use_bootstrap: boolean;
   auto_activate: boolean;
+  ground_truth_policy: 'individual' | 'consensus';
 }
 
 export interface DatasetStats {
   total_examples: number;
   by_ground_truth: Record<string, number>;
   model_version: string;
+}
+
+export type ConsensusStatus = 'SINGLE_REVIEW' | 'CONSENSUS' | 'DISAGREEMENT';
+
+export interface GroundTruthPair {
+  comparison_id: string;
+  objective_item_id: string;
+  compared_item_id: string;
+  match_id: string | null;
+  objective_text: string;
+  compared_text: string;
+  prediction_label: string;
+  features: Record<string, number>;
+  feature_source_review_id: string;
+  source_university_obj: string | null;
+  source_university_cmp: string | null;
+  source_course_obj: string | null;
+  source_course_cmp: string | null;
+  source_syllabus_obj: string | null;
+  source_syllabus_cmp: string | null;
+  source_page_obj: number | null;
+  source_page_cmp: number | null;
+  status: ConsensusStatus;
+  consensus_label: MatchClassification | null;
+  reviewer_count: number;
+  review_count: number;
+  votes: {
+    review_id: string;
+    reviewer_id: string;
+    human_decision: MatchClassification;
+    justification: string;
+    created_at: string;
+  }[];
+}
+
+export interface GroundTruthPage {
+  summary: {
+    total_pairs: number;
+    consensus_pairs: number;
+    disagreement_pairs: number;
+    single_review_pairs: number;
+    linked_review_events: number;
+  };
+  total: number;
+  limit: number;
+  offset: number;
+  items: GroundTruthPair[];
+}
+
+export interface ReviewerAgreement {
+  reviewer_a: string;
+  reviewer_b: string;
+  common_pairs: number;
+  agreements: number;
+  observed_agreement: number | null;
+  expected_agreement: number | null;
+  cohen_kappa: number | null;
+}
+
+export type AnnotationReason = 'DISAGREEMENT' | 'SECOND_REVIEW' | 'UNREVIEWED';
+
+export interface AnnotationCoverage {
+  total_pairs: number;
+  reviewed_pairs: number;
+  consensus_pairs: number;
+  disagreement_pairs: number;
+  pending_pairs: number;
+  review_events: number;
+  reviewed_percentage: number | null;
+  consensus_percentage: number | null;
+}
+
+export interface AnnotationCase {
+  case_id: string;
+  comparison_id: string;
+  model_version: string;
+  match_id: string | null;
+  objective_item_id: string;
+  compared_item_id: string;
+  objective_text: string;
+  compared_text: string;
+  objective_page: number | null;
+  compared_page: number | null;
+  classification: MatchClassification | null;
+  score: number | null;
+  status: 'UNREVIEWED' | 'SINGLE_REVIEW' | 'DISAGREEMENT' | 'CONSENSUS';
+  reviewer_ids: string[];
+  review_count: number;
+  reason: AnnotationReason | null;
+  boundary_distance: number | null;
+  uncertain_prediction: boolean;
+  near_boundary: boolean;
+}
+
+export interface AnnotationQueue {
+  strategy_version: string;
+  reference_thresholds: Record<string, number>;
+  coverage: AnnotationCoverage;
+  total: number;
+  limit: number;
+  offset: number;
+  items: AnnotationCase[];
+}
+
+export interface AnnotationBatch {
+  id: string;
+  reviewer_id: string;
+  comparison_id: string | null;
+  strategy_version: string;
+  reference_thresholds: Record<string, number>;
+  created_at: string;
+  cases: AnnotationCase[];
+  coverage_before: AnnotationCoverage;
+  scope_before: AnnotationCoverage;
+}
+
+export interface AnnotationBatchProgress {
+  batch: AnnotationBatch;
+  completion: {
+    batch_id: string;
+    completed_at: string;
+    coverage_after: AnnotationCoverage;
+    scope_after: AnnotationCoverage;
+  } | null;
+  items: AnnotationCase[];
+  coverage_current: AnnotationCoverage;
+  scope_current: AnnotationCoverage;
+  eligible_case_ids: string[];
+}
+
+export interface EvaluationSnapshot {
+  id: string;
+  name: string;
+  created_at: string;
+  content_hash: string;
+  comparison_count: number;
+  pair_count: number;
+  independent_groups: number;
+}
+
+export interface EvaluationCriteria {
+  min_f1_gain: number;
+  max_recall_drop: number;
+  max_coverage_mae_increase: number;
+  max_per_comparison_f1_drop: number;
+  max_per_comparison_coverage_increase: number;
+  min_independent_groups: number;
+}
+
+export interface EvaluationExperiment {
+  id: string;
+  snapshot_id: string;
+  created_at: string;
+  report: {
+    snapshot_hash: string;
+    fingerprint_hash: string;
+    protocol: string;
+    sample: { comparisons: number; pairs: number; independent_groups: number; positive_pairs: number; negative_pairs: number };
+    evaluations: Record<'reference' | 'candidate', {
+      manifest: { version_id: string; artifact_sha256: string | null; manifest_hash: string };
+      aggregate: Record<string, number>;
+      comparisons: { comparison_id: string; precision: number; recall: number; f1: number;
+        objective_coverage_error: number; compared_coverage_error: number }[];
+    }>;
+    criteria: EvaluationCriteria;
+    checks: Record<string, boolean>;
+    regressions: { comparison_id: string; f1_delta: number; objective_error_delta: number; compared_error_delta: number }[];
+    promotion_recommended: boolean;
+    automatic_activation: false;
+  };
 }

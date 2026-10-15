@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { Header } from './components/Header';
 import { SyllabusUploader } from './components/SyllabusUploader';
 import { Dashboard } from './components/Dashboard';
@@ -9,10 +9,11 @@ import { UnmatchedPanel } from './components/UnmatchedPanel';
 import { ReviewModal } from './components/ReviewModal';
 import { AuditDatasetView } from './components/AuditDatasetView';
 import { SupportGuideModal } from './components/SupportGuideModal';
-import { DualPdfViewer } from './components/DualPdfViewer';
-import { ModelManagementView } from './components/ModelManagementView';
 import { api } from './services/api';
 import type { Comparison, ContentMatch, MatchClassification, Syllabus } from './types';
+
+const DualPdfViewer = lazy(() => import('./components/DualPdfViewer').then((m) => ({ default: m.DualPdfViewer })));
+const ModelManagementView = lazy(() => import('./components/ModelManagementView').then((m) => ({ default: m.ModelManagementView })));
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<'upload' | 'dashboard' | 'results' | 'dataset' | 'models'>('upload');
@@ -26,7 +27,11 @@ export const App: React.FC = () => {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   useEffect(() => {
-    fetchSyllabi();
+    let cancelled = false;
+    api.listSyllabi().then((data) => {
+      if (!cancelled) setSyllabi(data);
+    }).catch((err: unknown) => console.error('Error fetching syllabi:', err));
+    return () => { cancelled = true; };
   }, []);
 
   const fetchSyllabi = async () => {
@@ -140,14 +145,20 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {currentTab === 'dataset' && <AuditDatasetView />}
+        {currentTab === 'dataset' && <AuditDatasetView onOpenComparison={handleSelectComparison} />}
 
-        {currentTab === 'models' && <ModelManagementView />}
+        {currentTab === 'models' && (
+          <Suspense fallback={<p role="status">Cargando gestión de modelos...</p>}>
+            <ModelManagementView />
+          </Suspense>
+        )}
       </main>
 
       {/* Visor Pericial Doble PDF (Fase 1.5) */}
       {pdfViewerMatch && activeComparison && (
+        <Suspense fallback={<p role="status">Cargando visor PDF...</p>}>
         <DualPdfViewer
+          key={`${activeComparison.id}:${pdfViewerMatch.id}`}
           comparison={activeComparison}
           initialMatchId={pdfViewerMatch.id}
           onClose={() => setPdfViewerMatch(null)}
@@ -157,6 +168,7 @@ export const App: React.FC = () => {
           objectiveSyllabus={objSyllabus}
           comparedSyllabus={cmpSyllabus}
         />
+        </Suspense>
       )}
 
       {reviewingMatch && (

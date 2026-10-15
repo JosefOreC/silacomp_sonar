@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import type { Syllabus } from '../types';
+import type { ComparisonSummary, Syllabus } from '../types';
 
 interface DashboardProps {
   onSelectComparison: (comparisonId: string) => void;
@@ -13,25 +13,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onGoToUpload,
   syllabi,
 }) => {
-  const [comparisons, setComparisons] = useState<any[]>([]);
+  const [comparisons, setComparisons] = useState<ComparisonSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSubTab, setActiveSubTab] = useState<'comparisons' | 'syllabi'>('comparisons');
 
   useEffect(() => {
-    loadComparisons();
+    let cancelled = false;
+    api.listComparisons().then((data) => {
+      if (!cancelled) setComparisons(data);
+    }).catch((err: unknown) => console.error(err)).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
   }, []);
-
-  const loadComparisons = async () => {
-    setLoading(true);
-    try {
-      const data = await api.listComparisons();
-      setComparisons(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div style={{ maxWidth: '1200px', margin: '30px auto', padding: '0 20px' }}>

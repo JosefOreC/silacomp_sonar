@@ -200,3 +200,23 @@ def test_review_repository_immutability(test_db: DatabaseManager) -> None:
     example = rev_repo.list_examples()[0]
     assert example.ground_truth_label == "PARTIAL_MATCH"
     assert example.prediction_label == "MATCH"
+    assert example.objective_item_id == "OBJ-01"
+    assert example.compared_item_id == "CMP-01"
+    assert example.source_syllabus_obj == "syl-A"
+    assert example.source_syllabus_cmp == "syl-B"
+
+    # Simular un registro de la versión anterior y recuperar procedencia sin alterar sus textos.
+    with test_db.get_connection() as conn:
+        conn.execute("UPDATE syllabi SET university = 'UNI', course_code = 'CS-101' WHERE id = 'syl-A'")
+        conn.execute("UPDATE dataset_examples SET objective_item_id = 'M-TEST', source_syllabus_obj = NULL")
+    historical = rev_repo.list_examples()[0]
+    assert historical.objective_item_id == "OBJ-01"
+    assert historical.source_university_obj == "UNI"
+    assert historical.source_course_obj == "CS-101"
+    assert historical.source_syllabus_obj == "syl-A"
+
+    # La exportación/importación conserva los metadatos aun sin enriquecer desde la comparación.
+    from dataclasses import replace
+    rev_repo.save_example(replace(historical, id="DATA-IMPORTED", source_course_obj="CS-999"))
+    imported = next(ex for ex in rev_repo.list_examples() if ex.id == "DATA-IMPORTED")
+    assert imported.source_course_obj == "CS-999"

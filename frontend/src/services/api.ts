@@ -4,6 +4,7 @@
 
 import type {
   Comparison,
+  ComparisonSummary,
   ComparisonEvidenceCatalog,
   DatasetStats,
   HumanReviewPayload,
@@ -12,11 +13,104 @@ import type {
   ModelVersion,
   Syllabus,
   TrainModelRequest,
+  ConsensusStatus,
+  GroundTruthPage,
+  ReviewerAgreement,
+  AnnotationBatch,
+  AnnotationBatchProgress,
+  AnnotationQueue,
+  AnnotationReason,
+  EvaluationSnapshot,
+  EvaluationExperiment,
+  EvaluationCriteria,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
+async function annotationRequest<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}/active-learning/${path}`, options);
+  if (!res.ok) {
+    const body: unknown = await res.json().catch(() => null);
+    const detail = body && typeof body === 'object' && 'detail' in body ? body.detail : null;
+    throw new Error(typeof detail === 'string' ? detail : 'No se pudo consultar o guardar el lote de anotación');
+  }
+  return res.json();
+}
+
+async function evaluationRequest<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}/evaluation/${path}`, options);
+  if (!res.ok) {
+    const body: unknown = await res.json().catch(() => null);
+    const detail = body && typeof body === 'object' && 'detail' in body ? body.detail : null;
+    throw new Error(typeof detail === 'string' ? detail : 'No se pudo completar la evaluación científica');
+  }
+  return res.json();
+}
+
 export const api = {
+  listEvaluationSnapshots(): Promise<EvaluationSnapshot[]> {
+    return evaluationRequest('snapshots');
+  },
+  createEvaluationSnapshot(name: string, comparisonIds: string[]): Promise<EvaluationSnapshot> {
+    return evaluationRequest('snapshots', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, comparison_ids: comparisonIds }) });
+  },
+  listEvaluationExperiments(): Promise<EvaluationExperiment[]> {
+    return evaluationRequest('experiments');
+  },
+  createEvaluationExperiment(snapshotId: string, referenceVersion: string, candidateVersion: string, criteria: EvaluationCriteria): Promise<EvaluationExperiment> {
+    return evaluationRequest('experiments', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ snapshot_id: snapshotId, reference_version: referenceVersion, candidate_version: candidateVersion, criteria }) });
+  },
+  getEvaluationExportUrl(kind: 'snapshots' | 'experiments', id: string): string {
+    return `${API_BASE_URL}/evaluation/${kind}/${encodeURIComponent(id)}/export`;
+  },
+  getAnnotationQueue(filters: { comparisonId: string; reason: AnnotationReason | ''; reviewerId: string }, offset = 0): Promise<AnnotationQueue> {
+    const params = new URLSearchParams({ limit: '20', offset: String(offset) });
+    if (filters.comparisonId) params.set('comparison_id', filters.comparisonId);
+    if (filters.reason) params.set('reason', filters.reason);
+    if (filters.reviewerId.trim()) params.set('reviewer_id', filters.reviewerId.trim());
+    return annotationRequest(`queue?${params}`);
+  },
+
+  createAnnotationBatch(reviewerId: string, comparisonId: string, reason: AnnotationReason | '', limit: number): Promise<AnnotationBatchProgress> {
+    return annotationRequest('batches', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reviewer_id: reviewerId, comparison_id: comparisonId || null, reason: reason || null, limit }) });
+  },
+
+  listAnnotationBatches(): Promise<AnnotationBatch[]> {
+    return annotationRequest('batches');
+  },
+
+  getAnnotationBatch(id: string): Promise<AnnotationBatchProgress> {
+    return annotationRequest(`batches/${encodeURIComponent(id)}`);
+  },
+
+  completeAnnotationBatch(id: string): Promise<AnnotationBatchProgress> {
+    return annotationRequest(`batches/${encodeURIComponent(id)}/complete`, { method: 'POST' });
+  },
+  async getGroundTruth(comparisonId: string, status: ConsensusStatus | '', offset = 0): Promise<GroundTruthPage> {
+    const params = new URLSearchParams({ limit: '20', offset: String(offset) });
+    if (comparisonId) params.set('comparison_id', comparisonId);
+    if (status) params.set('status', status);
+    const res = await fetch(`${API_BASE_URL}/dataset/ground-truth?${params}`);
+    if (!res.ok) throw new Error('Error al consultar el ground truth');
+    return res.json();
+  },
+
+  async getReviewerAgreement(comparisonId: string): Promise<ReviewerAgreement[]> {
+    const params = new URLSearchParams();
+    if (comparisonId) params.set('comparison_id', comparisonId);
+    const res = await fetch(`${API_BASE_URL}/dataset/agreement?${params}`);
+    if (!res.ok) throw new Error('Error al consultar el acuerdo entre revisores');
+    return res.json();
+  },
+
+  getGroundTruthExportUrl(format: 'json' | 'csv', comparisonId: string): string {
+    const params = new URLSearchParams({ format });
+    if (comparisonId) params.set('comparison_id', comparisonId);
+    return `${API_BASE_URL}/dataset/ground-truth/export?${params}`;
+  },
   /**
    * Sube un archivo de sílabo PDF y devuelve los metadatos registrados.
    */
@@ -101,7 +195,7 @@ export const api = {
   /**
    * Obtiene el historial de comparaciones ejecutadas.
    */
-  async listComparisons(): Promise<unknown[]> {
+  async listComparisons(): Promise<ComparisonSummary[]> {
     const res = await fetch(`${API_BASE_URL}/comparisons`);
     if (!res.ok) throw new Error('Error al obtener lista de comparaciones');
     return res.json();

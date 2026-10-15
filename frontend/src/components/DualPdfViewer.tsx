@@ -33,6 +33,7 @@ export const DualPdfViewer: React.FC<DualPdfViewerProps> = ({
   };
 
   const [currentIndex, setCurrentIndex] = useState<number>(findInitialIndex);
+  const [reviewerId, setReviewerId] = useState('DOCENTE_EVALUADOR');
 
   const currentMatch = matches[currentIndex] || null;
 
@@ -40,13 +41,14 @@ export const DualPdfViewer: React.FC<DualPdfViewerProps> = ({
   const [objPage, setObjPage] = useState<number>(currentMatch ? currentMatch.objective_page : 1);
   const [cmpPage, setCmpPage] = useState<number>(currentMatch ? currentMatch.compared_page : 1);
 
-  // Sincronizar páginas al cambiar de correspondencia
-  useEffect(() => {
-    if (currentMatch) {
-      setObjPage(currentMatch.objective_page || 1);
-      setCmpPage(currentMatch.compared_page || 1);
-    }
-  }, [currentIndex, currentMatch]);
+  // El evento de navegación actualiza la selección y las páginas conjuntamente.
+  const selectMatch = (index: number) => {
+    const match = matches[index];
+    if (!match) return;
+    setCurrentIndex(index);
+    setObjPage(match.objective_page || 1);
+    setCmpPage(match.compared_page || 1);
+  };
 
   // Soporte de tecla Escape para cerrar
   useEffect(() => {
@@ -176,7 +178,7 @@ export const DualPdfViewer: React.FC<DualPdfViewerProps> = ({
       <EvidenceNavigator
         matches={matches}
         currentIndex={currentIndex}
-        onSelectIndex={setCurrentIndex}
+        onSelectIndex={selectMatch}
       />
 
       {/* 3. Área Central: Los Dos Visores PDF Lado a Lado */}
@@ -219,7 +221,10 @@ export const DualPdfViewer: React.FC<DualPdfViewerProps> = ({
 
       {/* 4. Panel Inferior de Dictamen Humano Directo */}
       <ViewerReviewPanel
+        key={currentMatch.id}
         match={currentMatch}
+        reviewerId={reviewerId}
+        onReviewerChange={setReviewerId}
         onReviewSubmitted={onReviewSubmitted}
       />
     </div>

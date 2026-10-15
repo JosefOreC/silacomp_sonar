@@ -1,8 +1,9 @@
 # Registro de Tareas y Avances de Implementación (TASKS)
-## Sistema Inteligente para Comparación de Sílabos Universitarios — Fase 1
+## Sistema Inteligente para Comparación de Sílabos Universitarios — Fases 1.0 a 3.0
 
-**Versión:** 1.0  
-**Última actualización:** 2026-09-24  
+**Versión:** 3.2
+
+**Última actualización:** 2026-10-15
 **Documento de referencia:** [PLANTEAMIENTO_IMPLEMENTACION_COMPARACION_SILABOS.md](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/docs/PLANTEAMIENTO_IMPLEMENTACION_COMPARACION_SILABOS.md) | [FLUJO_FASE_1.md](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/docs/FLUJO_FASE_1.md)  
 **Normas de actualización:** Ver [REGLAS_IMPLEMENTACION.md](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/docs/REGLAS_IMPLEMENTACION.md)
 
@@ -17,7 +18,7 @@
 
 ---
 
-## Resumen Ejecutivo de Avance — Fase 1
+## Resumen Ejecutivo de Avance
 
 | Módulo / Paquete de Trabajo | Estado General | % Completado | Tareas Hechas | Total Tareas |
 |---|:---:|:---:|:---:|:---:|
@@ -48,6 +49,15 @@
 | 23. Fase 2.0: Frontend — Gestión de Modelos y Auditoría | Completado | 100% | 4 | 4 |
 | 24. Fase 2.0: Pruebas Automatizadas y Validación E2E | Completado | 100% | 3 | 3 |
 | **TOTAL GENERAL (FASE 1.0 + 1.5 + 2.0)** | **Completado** | **100%** | **85** | **85** |
+| 25. Fase 2.1: Consolidación y validación científica | Completado | 100% | 8 | 8 |
+| **TOTAL CON FASE 2.1** | **Completado** | **100%** | **93** | **93** |
+| 26. Fase 3: Ground truth y evaluación interevaluador | Completado | 100% | 7 | 7 |
+| 27. Fase 3: Selección de casos para aprendizaje activo | Completado | 100% | 3 | 3 |
+| 28. Fase 3: Experimentos y mejora controlada | Completado | 100% | 2 | 2 |
+| **SUBTOTAL FASE 3 PLANIFICADA** | **Completado** | **100%** | **12** | **12** |
+| **TOTAL CON FASE 3 PLANIFICADA** | **Completado** | **100%** | **105** | **105** |
+| 29. Fase 3.2: Validación integrada en navegador | Completado | 100% | 2 | 2 |
+| **TOTAL CON VALIDACIÓN INTEGRADA** | **Completado** | **100%** | **107** | **107** |
 
 ---
 
@@ -244,6 +254,44 @@
 ---
 
 ---
+
+## Fase 2.1: Consolidación antes de aprendizaje activo
+
+### Paquete 25: Coherencia, reproducibilidad y evaluación sin filtración
+- [x] **TASK-25.1:** Sincronizar versión, fase, README y contratos del endpoint de salud. *(Completado el 2026-10-15)*
+- [x] **TASK-25.2:** Declarar dependencias OCR y directas de ML en ambos manifiestos del backend. *(Completado el 2026-10-15)*
+- [x] **TASK-25.3:** Aislar base, cargas, reportes y modelos de las pruebas; comprobar que la base local no cambia. *(Completado el 2026-10-15)*
+- [x] **TASK-25.4:** Recuperar procedencia académica e IDs reales de contenidos en el dataset, incluyendo registros históricos consultables. *(Completado el 2026-10-15)*
+- [x] **TASK-25.5:** Separar entrenamiento y evaluación por grupos académicos, evitar que bootstrap sintético contamine evaluación real y añadir pruebas de regresión. *(Completado el 2026-10-15)*
+- [x] **TASK-25.6:** Dividir la carga del visor PDF y la gestión de modelos; validar compilación y ejecutar la suite aislada. *(Completado el 2026-10-15)*
+- [x] **TASK-25.7:** Alinear el benchmark con el scoring adaptativo vigente y retirar métricas estáticas del baseline en la API; distinguir evaluación por pares de comparación completa. *(Completado el 2026-10-15)*
+- [x] **TASK-25.8:** Resolver advertencias existentes de lint en efectos y dependencias de componentes React, corregir los contratos tipados de las vistas afectadas y usar los recuentos reales del dataset en Auditoría. *(Completado el 2026-10-15)*
+
+## Fase 3: Ground truth, aprendizaje activo y evaluación avanzada
+
+### Paquete 26: Ground truth y evaluación interevaluador
+- [x] **TASK-26.1:** Preservar revisiones como eventos inmutables; validar autor y pertenencia de los contenidos, y conservar la predicción real del sistema. *(Completado el 2026-10-15)*
+- [x] **TASK-26.2:** Consolidar pares por comparación y contenidos, con un voto vigente por revisor; distinguir revisión única, acuerdo y desacuerdo sin sobrescribir etiquetas originales. *(Completado el 2026-10-15)*
+- [x] **TASK-26.3:** Calcular acuerdo observado y kappa de Cohen por pareja de revisores, indicando tamaño de muestra y casos no calculables. *(Completado el 2026-10-15)*
+- [x] **TASK-26.4:** Exponer resumen, pares y exportación del ground truth mediante API tipada y filtros de comparación. *(Completado el 2026-10-15)*
+- [x] **TASK-26.5:** Permitir entrenamiento con pares consensuados y registrar la política y revisiones fuente en el experimento. *(Completado el 2026-10-15)*
+- [x] **TASK-26.6:** Incorporar panel de consenso y acuerdo entre revisores en Auditoría con estados vacíos y errores explícitos. *(Completado el 2026-10-15)*
+- [x] **TASK-26.7:** Validar dominio, persistencia, endpoints y entrenamiento, actualizar documentación y ejecutar pruebas aisladas, compilación y lint. *(Completado el 2026-10-15)*
+
+### Paquete 27: Aprendizaje activo
+- [x] **TASK-27.1:** Definir y probar priorización determinista de casos por incertidumbre, desacuerdo y ausencia de revisión, sin modificar predicciones. *(Completado el 2026-10-15)*
+- [x] **TASK-27.2:** Implementar cola paginada y filtrable con razones de prioridad y exclusión de pares ya consensuados. *(Completado el 2026-10-15)*
+- [x] **TASK-27.3:** Integrar revisión desde la cola y medir cobertura de anotación antes y después de cada lote. *(Completado el 2026-10-15)*
+
+### Paquete 28: Experimentos y mejora controlada
+- [x] **TASK-28.1:** Versionar snapshots de ground truth y evaluar comparaciones completas en grupos reservados, con métricas de cobertura y correspondencias. *(Completado el 2026-10-15)*
+- [x] **TASK-28.2:** Comparar versiones sobre el mismo conjunto reservado y registrar criterios de promoción y regresiones. *(Completado el 2026-10-15)*
+
+### Paquete 29: Validación integrada en navegador
+- [x] **TASK-29.1:** Incorporar y ejecutar pruebas de navegador con API y almacenamiento aislados para reserva, experimentos y recuperación de informes. *(Completado el 2026-10-15)*
+- [x] **TASK-29.2:** Corregir incidencias reproducibles del flujo y documentar el procedimiento de validación y sus límites. *(Completado el 2026-10-15)*
+
+La Fase 4 (usuarios, PostgreSQL y gestión documental) permanece fuera del alcance de estos paquetes. El avance de Fase 3 se refiere a implementación; la anotación académica real y los experimentos institucionales requieren datos revisados.
 
 ## Bitácora de Sesiones de Trabajo
 
@@ -711,6 +759,172 @@
   - Suite de **51 pruebas automatizadas pasando al 100%** en `pytest`.
   - Compilación frontend de producción (`npm run build`) limpia en 1.50 s con 0 errores de TypeScript.
   - **Fase 2.0 completada al 100%** — 85/85 tareas globales del proyecto implementadas.
+
+---
+
+### Sesión 19 — 2026-10-15
+- **Objetivos de la sesión:**
+  - Integrar las tareas de consolidación posteriores a Fase 2.0 y comenzar su ejecución con validación reproducible.
+- **Tareas completadas:**
+  - `TASK-25.1` a `TASK-25.6`: versión 2.1.0 coherente en API, salud y manifiesto; README actualizado; dependencias RapidOCR, NumPy y joblib declaradas.
+  - Configuración de almacenamiento con `CONVCOMP_DATA_DIR` y `CONVCOMP_REPORTS_DIR`; colección y ejecución de pruebas aisladas, incluyendo modelos y activaciones.
+  - Dataset con IDs de contenidos reales y procedencia académica persistida mediante migración aditiva; recuperación de metadatos históricos por consulta y exportación JSON/CSV.
+  - Separación determinista por componentes conectados de universidad/asignatura, sílabo y contenido; calibración por grupos cuando existen datos suficientes; rechazo explícito de procedencia incompleta o particiones sin las clases necesarias.
+  - Bootstrap únicamente en entrenamiento cuando existen revisiones reales. Métricas sintéticas identificadas en API/UI y excluidas de activación automática.
+  - Visor PDF y gestión de modelos con carga bajo demanda. JavaScript inicial reducido de 785.47 kB a 309.19 kB; visor separado de 457.63 kB.
+- **Resultados de validación:**
+  - Suite completa: **60 pruebas aprobadas**, 2 advertencias de deprecación de dependencias, en 57.08 s. Ejecución offline de modelos para evitar descargas durante validación.
+  - `npm.cmd run build`: correcto, sin advertencia de paquetes JavaScript mayores de 500 kB.
+  - `npm.cmd run lint`: sin errores; conserva 8 advertencias existentes, registradas en `TASK-25.8`.
+  - `python -m pip check`: sin dependencias incompatibles en el entorno instalado. No se realizó una instalación desde cero.
+  - `git diff --check`: correcto. Hash SHA-256 de la base de desarrollo idéntico antes y después de las pruebas: `b48369496afb629f2c5abea79d09f77c748a96d6f0aed2567e36f72178ae8b76`.
+- **Decisiones técnicas adoptadas:**
+  - Mantener las fuentes conectadas en la misma partición aun si cambian de rol objetivo/comparado; conservar trazabilidad mediante IDs de ejemplos y grupos en las métricas.
+  - No activar ni reentrenar el modelo de desarrollo durante las pruebas. La migración de la base local se aplicará al arrancar la aplicación actualizada.
+- **Bloqueadores / Riesgos identificados:**
+  - El benchmark previo del entrenador utiliza una aproximación heurística que debe alinearse con el scoring adaptativo; los valores fijos anunciados por la API para el baseline requieren revisión (`TASK-25.7`).
+  - Versiones de modelos previas no registran procedencia de evaluación; la UI lo informa y recomienda reentrenar. La validación por grupos puede requerir ampliar o completar las revisiones académicas existentes.
+- **Próximas tareas para la siguiente sesión:**
+  - `TASK-25.7`: alinear benchmarking y representación del baseline.
+  - `TASK-25.8`: resolver advertencias de lint en componentes React.
+
+---
+
+### Sesión 20 — 2026-10-15
+- **Objetivos de la sesión:**
+  - Completar las dos tareas pendientes del Paquete 25 y cerrar la consolidación de Fase 2.1.
+- **Tareas completadas:**
+  - `TASK-25.7`: extraer reglas puras de scoring adaptativo, umbrales y afinidad de contenido a `domain/scoring.py`; comparador y benchmark reutilizan esas reglas.
+  - Retirar el doble conteo de contención en el benchmark, conservar la correspondencia `UNCERTAIN` → clase parcial y registrar el alcance por pares sin atribuir resultados a la asignación global.
+  - Eliminar métricas estáticas del descriptor del baseline y unificar las respuestas de listado y modelo activo. Mantener visible el baseline activo cuando solo existen candidatos sin activar.
+  - Conservar precisión float64 en la matriz de características para respetar los valores persistidos en límites adaptativos como 0.70.
+  - `TASK-25.8`: eliminar las ocho advertencias de lint con carga asíncrona, dependencias estables y navegación de evidencias mediante eventos; tipar las vistas afectadas y PDF.js sin `any`.
+  - Corregir Auditoría para mostrar `by_ground_truth`, que sí devuelve la API, en lugar de tasas y distribuciones inexistentes; actualizar el modelo seleccionado tras entrenar o activar sin disparar ciclos de recarga.
+- **Resultados de validación:**
+  - Suite completa: **67 pruebas aprobadas**, 2 advertencias de deprecación de dependencias, en 57.02 s.
+  - Tras añadir el caso de precisión en el umbral, **25 pruebas específicas de scoring, ML, separación académica y endpoints de modelos aprobadas** en 2.23 s. La cobertura conjunta comprende los 68 casos actuales.
+  - `npm.cmd run lint`: sin errores ni advertencias. `npm.cmd run build`: correcto, sin advertencias de tamaño de paquetes JavaScript. No se realizó validación interactiva en navegador.
+  - `git diff --check`: correcto. Base de desarrollo con el mismo SHA-256 de la sesión anterior; sin entrenamiento ni activación de modelos locales durante las pruebas.
+- **Decisiones técnicas adoptadas:**
+  - Reutilizar reglas del dominio para impedir divergencias entre el comparador y el benchmark; mantener la evaluación por pares explícita en métricas, UI y documentación.
+  - No modificar métricas históricas de modelos ya registrados; la UI indica cuándo una versión antigua no declara alcance de evaluación.
+- **Bloqueadores / Riesgos identificados:**
+  - Ningún bloqueador para las tareas 25.7 y 25.8. La comparación global entre sílabos y el rendimiento con revisiones humanas independientes requieren experimentos propios; no se infieren del benchmark por pares.
+  - Persisten dos advertencias de deprecación del entorno Python ajenas al lint de frontend.
+- **Próximas tareas para la siguiente sesión:**
+  - Definir el paquete de Fase 3 a partir del roadmap: ground truth ampliado, evaluación interevaluador y aprendizaje activo, con criterios de aceptación y datos revisados independientes.
+  - Las fases 3 y 4 no forman parte del 100% de alcance cerrado hasta Fase 2.1.
+
+---
+
+### Sesión 21 — 2026-10-15
+- **Objetivos de la sesión:**
+  - Definir los Paquetes 26–28 de Fase 3 e implementar el primer incremento de ground truth y acuerdo interevaluador.
+- **Tareas completadas:**
+  - `TASK-26.1` a `TASK-26.7`: eventos de revisión inmutables y validación de contenidos/autores; consolidación por par y voto vigente por revisor; acuerdo observado y kappa nominal por pareja.
+  - API paginada de ground truth, resumen, filtros de comparación/estado y exportación JSON/CSV con votos, características, procedencia y páginas de evidencia. Revisión única y desacuerdo permanecen explícitos.
+  - Entrenamiento con política `consensus`, una muestra por par acordado y trazabilidad de revisiones fuente; política `individual` conservada por compatibilidad. Sin consenso no se sustituye silenciosamente un conjunto revisado por sintéticos.
+  - Panel de Auditoría con filtros, paginación, acuerdo interevaluador y acceso al informe; identificación del revisor en el visor. Cambiar de par reinicia decisión y justificación, manteniendo la identidad declarada del revisor.
+  - Versión de aplicación y manifiesto sincronizados a **3.0.0**, fase 3. README y `FLUJO_FASE_3.md` describen el alcance parcial; aprendizaje activo y experimentos siguen pendientes.
+- **Resultados de validación:**
+  - Suite completa: **82 pruebas aprobadas**, 2 advertencias de deprecación de dependencias, en 34.72 s.
+  - Tras incorporar páginas de evidencia a la consulta, **17 pruebas específicas de ground truth, endpoints y persistencia aprobadas** en 2.10 s.
+  - Cobertura nueva: deduplicación de autor, correcciones sin sobrescritura, desacuerdos sin resolución por mayoría, kappa conocido/indeterminado, autores sin pares comunes, paginación superior a 500 eventos, exportaciones y entrenamiento consensuado real por grupos.
+  - `npm.cmd run lint`: sin errores ni advertencias. `npm.cmd run build`: correcto, sin advertencias de tamaño de paquetes JavaScript. No se realizó validación interactiva en navegador.
+  - `git diff --check`: correcto. Base local con SHA-256 idéntico al de las sesiones 19 y 20; no se activó ni entrenó el modelo local de desarrollo.
+- **Decisiones técnicas adoptadas:**
+  - La unidad de consenso es comparación + contenidos objetivo/comparado, incluyendo enlaces manuales válidos. Corregir una anotación agrega un evento; solo su último voto por autor interviene en consenso y acuerdo.
+  - Mantener las cuatro etiquetas en la evaluación interevaluador; el mapeo de `UNCERTAIN` a clase parcial se aplica únicamente al entrenamiento supervisado y su benchmark.
+  - El consenso se calcula por unanimidad entre al menos dos identificadores distintos; no equivale a adjudicación oficial ni demuestra independencia de personas sin autenticación.
+  - Recuperar características y páginas de una correspondencia existente cuando el mismo par también tiene revisiones manuales. Un par manual sin características requiere procesamiento antes de entrenar.
+- **Bloqueadores / Riesgos identificados:**
+  - Sin bloqueadores para Paquete 26. La autenticación de autores permanece en Fase 4; los identificadores de revisión son declarados.
+  - Snapshots reproducibles y evaluación completa están pendientes en Paquete 28. La funcionalidad implementada no sustituye la adquisición de anotaciones académicas reales.
+- **Próximas tareas para la siguiente sesión:**
+  - `TASK-27.1` a `TASK-27.3`: priorización y cola de casos para aprendizaje activo, revisión y cobertura de anotación.
+
+---
+
+### Sesión 22 — 2026-10-15
+- **Objetivos de la sesión:**
+  - Implementar el Paquete 27: cola priorizada, lotes persistidos y revisión con medición de cobertura de anotación.
+- **Tareas completadas:**
+  - `TASK-27.1`: reglas puras y deterministas de selección por desacuerdo, segunda revisión y ausencia de revisión; clasificación incierta y distancia a umbrales de referencia dentro de cada grupo, con desempate por IDs.
+  - `TASK-27.2`: cola paginada y filtrable por comparación, motivo y revisor; exclusión de consenso y del voto único del propio autor. Incluye pares manuales propuestos sin inventar scores.
+  - `TASK-27.3`: selección fija de lotes de hasta 100 casos, persistencia de autor, estrategia, umbrales y cobertura inicial; cierre idempotente con medición final independiente. Recuperación de lotes y consulta separada del estado actual.
+  - Auditoría permite consultar la cola, crear o recuperar lotes, abrir evidencias, registrar decisiones y comparar cobertura antes/después. Los paneles de estadísticas y consenso se actualizan al registrar votos.
+  - Nuevas tablas aditivas `annotation_batches` y `annotation_batch_completions`, repositorio y puertos de dominio; versión de aplicación y manifiesto **3.1.0**, manteniendo fase 3.
+- **Resultados de validación:**
+  - Suite completa: **90 pruebas aprobadas**, 2 advertencias de deprecación de dependencias, en 51.94 s.
+  - Tras completar la persistencia de umbrales, **8 pruebas específicas de prioridad y endpoints/lotes aprobadas** en 2.05 s.
+  - Casos cubiertos: orden estable, deduplicación de pares, consenso excluido, voto único por autor, pares manuales sin puntuación, denominador de cobertura, paginación, recuperación y cierre inmutable/idempotente, errores de validación y pérdida de fuentes.
+  - `npm.cmd run lint`: sin errores ni advertencias. `npm.cmd run build`: correcto, sin advertencias de tamaño de paquetes JavaScript. No se realizó validación interactiva en navegador.
+  - `git diff --check`: correcto. Base de desarrollo con SHA-256 idéntico al de las sesiones previas; ningún entrenamiento ni activación de modelos locales.
+- **Decisiones técnicas adoptadas:**
+  - Los umbrales de prioridad son referencias declaradas y versionadas; el score no se presenta como probabilidad ni como confianza calibrada.
+  - Medir cobertura de anotación sobre pares propuestos, sin confundirla con cobertura curricular. Los lotes conservan su selección aunque la cola cambie.
+  - Mantener separadas selección inicial, cierre persistido y estado actual. Un cierre posterior repetido no sobrescribe la medición original; si una fuente desaparece, el progreso informa conflicto.
+  - Registrar votos mediante el endpoint existente para conservar la predicción original. Cerrar un lote no exige consenso ni dispara entrenamiento: un solo voto puede requerir otro autor.
+- **Bloqueadores / Riesgos identificados:**
+  - Ningún bloqueador para Paquete 27. La autenticación sigue pendiente en Fase 4; el autor del lote es declarado.
+  - Los cambios antes/después pueden incluir anotaciones concurrentes de otros revisores. La mejora del modelo no se infiere de cobertura de anotación; requiere los experimentos del Paquete 28.
+- **Próximas tareas para la siguiente sesión:**
+  - `TASK-28.1` y `TASK-28.2`: snapshots de ground truth, evaluación de comparaciones completas y comparación controlada de versiones sobre conjuntos reservados.
+
+---
+
+### Sesión 23 — 2026-10-15
+- **Objetivos de la sesión:**
+  - Completar el Paquete 28 con conjuntos reservados reproducibles y comparación controlada de versiones sobre sílabos completos.
+- **Tareas completadas:**
+  - `TASK-28.1`: snapshots append-only de contenidos, fuentes, matriz completa de consenso definitivo, revisiones y traza NLP; hash de contenido y huella de código/dependencias. Evaluación del comparador completo con precisión, recall, F1 y errores de cobertura en ambos sentidos.
+  - `TASK-28.2`: experimentos persistidos con referencia y candidato sobre el mismo conjunto, criterios explícitos, regresiones por comparación y recomendación sin activación automática. Exportación JSON de snapshots e informes.
+  - Exclusión transitiva de fuentes reservadas antes de entrenamiento y calibración; procedencia verificable de todas las fuentes humanas expuestas. Rechazo de modelos contaminados, antiguos sin procedencia verificable o con artefactos ausentes/alterados.
+  - Panel de evaluación en Gestión de modelos para reservar comparaciones, seleccionar versiones, configurar límites de F1 y consultar métricas y comprobaciones.
+  - Corrección del comparador: aplica la inferencia supervisada que antes recibía sin utilizarla. Carga fallida limpia la caché y la activación comprueba el artefacto antes de cambiar el modelo activo. Versiones nuevas con identificadores únicos y ruta de artefacto persistida.
+  - Aplicación y manifiesto en **3.2.0**. README, flujo y protocolo de experimentos actualizados. Alcance de desarrollo de Fase 3 completado: **12/12**, total planificado **105/105**.
+- **Resultados de validación:**
+  - Suite completa: **99 pruebas aprobadas**, 2 advertencias de deprecación de dependencias, en 56.09 s.
+  - Tras completar las anotaciones de tipos del motor, **9 pruebas específicas de evaluación aprobadas** en 2.81 s.
+  - Cobertura nueva: inferencia efectiva, replay repetible, matriz incompleta, reserva y grupos transitivos, entrenamiento independiente, contaminación, pérdida/cambio de artefactos, cambio de entorno, mejoras y regresiones, muestras insuficientes, persistencia inmutable y activación fallida sin alterar el modelo activo.
+  - `npm.cmd run lint`: correcto. `npm.cmd run build`: correcto, sin advertencias de tamaño de paquetes JavaScript. Sin prueba interactiva en navegador.
+  - `git diff --check`: correcto. SHA-256 de la base local conservado: `b48369496afb629f2c5abea79d09f77c748a96d6f0aed2567e36f72178ae8b76`. No se entrenaron ni activaron modelos en la base de desarrollo.
+- **Decisiones técnicas adoptadas:**
+  - Exigir consenso definitivo para cada par objetivo × comparado; un par desconocido no constituye un negativo. Congelar las salidas NLP y repetir selección global y coberturas sin crear comparaciones nuevas ni releer PDFs.
+  - Usar `MATCH` y `PARTIAL_MATCH` como positivos para las métricas de correspondencia; expresar errores de cobertura en puntos porcentuales. No inventar un score humano continuo ni inferir rendimiento institucional desde fixtures sintéticos.
+  - Bloquear fuentes reservadas por identidad académica, documento, contenidos y pares normalizados. Un ID de versión evaluado conserva el mismo manifiesto y artefacto; cualquier sustitución requiere otra versión.
+- **Bloqueadores / Riesgos identificados:**
+  - Sin bloqueadores de implementación para Paquete 28. La validación institucional requiere matrices exhaustivas de revisiones y modelos entrenados con fuentes humanas independientes. Las versiones antiguas sin procedencia deben reentrenarse.
+  - Los autores siguen siendo identificadores declarados. La reserva es permanente en esta versión; no se incorpora importación ni liberación de snapshots.
+- **Próximas tareas para la siguiente sesión:**
+  - Validar el flujo en navegador y preparar anotaciones institucionales independientes para ejecutar experimentos reales.
+  - Definir el alcance de Fase 4 antes de incorporar usuarios, PostgreSQL o gestión documental; quedan fuera de los paquetes cerrados de Fase 3.
+
+---
+
+### Sesión 24 — 2026-10-15
+- **Objetivos de la sesión:**
+  - Integrar las tareas de validación en navegador y comprobar el flujo científico con frontend y API reales sobre almacenamiento aislado.
+- **Tareas completadas:**
+  - `TASK-29.1`: Playwright y configuración reproducible de Chromium, API temporal con fuentes y vectores controlados y arranque/cierre automático de procesos propios. Sin endpoints de preparación en producción ni uso de la base de desarrollo.
+  - Cuatro escenarios: reserva y experimento exitoso con descarga y recuperación; versiones iguales deshabilitadas; matriz incompleta rechazada sin guardar; recuperación de consulta fallida y estados vacíos. El primer escenario también verifica que no se activa el candidato ni aparecen excepciones JavaScript.
+  - `TASK-29.2`: al reintentar una consulta fallida, seleccionar el conjunto disponible cuando no hay selección válida; presentar los pesos y umbrales anidados del baseline con sus valores, evitando `[object Object]`.
+  - Documentación de preparación, ejecución, evidencias y límites en `VALIDACION_NAVEGADOR.md`. README y protocolo vinculados. Aplicación y manifiesto actualizados a **3.2.1**, fase 3.
+- **Resultados de validación:**
+  - Ejecución integrada final: **4 pruebas de Chromium aprobadas en 43.4 s**, comando terminado con código 0 y servidores temporales cerrados. Informe HTML y captura completa del resultado generados; captura inspeccionada visualmente.
+  - `npm.cmd run lint` y `npm.cmd run build`: correctos, incluyendo configuración y pruebas TypeScript. Sin advertencias de tamaño de paquetes JavaScript.
+  - **12 pruebas de backend aprobadas en 14.73 s**: salud/OpenAPI, endpoints y evaluación científica. Persisten dos deprecaciones de dependencias. La suite completa de 99 pruebas estaba aprobada en la sesión 23; no se modificó la lógica de backend en esta sesión.
+  - `git diff --check`: correcto. SHA-256 de la base de desarrollo conservado: `b48369496afb629f2c5abea79d09f77c748a96d6f0aed2567e36f72178ae8b76`. No hubo entrenamiento ni activación sobre datos locales de desarrollo.
+- **Decisiones técnicas adoptadas:**
+  - Reutilizar fixtures controlados de integración para anotar y registrar el candidato, conservando API y persistencia reales durante el flujo. Simular únicamente respuestas de consulta fallida y estado vacío.
+  - Fijar Playwright en el lockfile y permitir un ejecutable Chromium local mediante `CONVCOMP_BROWSER_EXECUTABLE`. Dependencias obtenidas de caché sin descargar modelos ni paquetes por red.
+  - Iniciar procesos directamente para evitar el bloqueo de cierre de árboles de procesos observado con el arranque estándar en este entorno Windows. Reservar puertos exclusivos y rechazar reutilizar servidores activos.
+- **Bloqueadores / Riesgos identificados:**
+  - Sin bloqueadores para el Paquete 29. La cobertura se limita al panel científico en Chromium de escritorio; no se acredita compatibilidad móvil ni otros navegadores.
+  - Siguen pendientes aceptación manual institucional, anotaciones reales e identidad autenticada de revisores. Los datos controlados no demuestran rendimiento científico institucional.
+- **Próximas tareas para la siguiente sesión:**
+  - Definir el alcance y criterios de aceptación del siguiente incremento de Fase 4 según el roadmap.
+  - Ejecutar experimentos institucionales cuando se disponga de matrices exhaustivas y fuentes de entrenamiento independientes.
 
 
 

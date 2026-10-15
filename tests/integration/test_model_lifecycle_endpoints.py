@@ -19,6 +19,11 @@ def test_list_models_returns_baseline_or_registered(client: TestClient) -> None:
     models = res.json()
     assert len(models) >= 1
     assert any(m["is_active"] for m in models)
+    active = client.get("/api/models/active").json()
+    baseline = next(m for m in models if m["version_id"] == active["version_id"])
+    assert baseline == active
+    assert baseline["metrics"] == {"type": "heuristic_baseline", "evaluation_status": "not_evaluated"}
+    assert baseline["parameters"]["weights"]["semantic"] == 0.45
 
 
 def test_train_model_and_activate_lifecycle(client: TestClient) -> None:
@@ -38,6 +43,13 @@ def test_train_model_and_activate_lifecycle(client: TestClient) -> None:
     assert "metrics" in model_data
     assert model_data["metrics"]["accuracy"] > 0.60
     assert model_data["is_active"] is False
+    benchmark = model_data["metrics"]["baseline_comparison"]
+    assert benchmark["baseline_version"] == "bipartite-adaptive-002"
+    assert benchmark["evaluation_unit"] == "content_pair"
+    assert benchmark["includes_global_assignment"] is False
+    # Un candidato sin activar no debe ocultar el baseline que sigue en uso.
+    assert any(m["is_active"] and m["version_id"] == "bipartite-adaptive-002"
+               for m in client.get("/api/models").json())
 
     # 2. Consultar evaluación del modelo
     res_eval = client.get(f"/api/models/{version_id}/evaluation")
@@ -69,3 +81,24 @@ def test_dataset_export_csv_and_json(client: TestClient) -> None:
     assert res_csv.status_code == 200
     assert "text/csv" in res_csv.headers.get("content-type", "")
     assert "semantic_sim" in res_csv.text
+
+
+def test_synthetic_training_does_not_auto_activate(client: TestClient) -> None:
+    response = client.post("/api/models/train", json={"use_bootstrap": True, "auto_activate": True})
+    assert response.status_code == 201
+    model = response.json()
+    assert model["metrics"]["split"]["evaluation_scope"] == "synthetic"
+    assert model["is_active"] is False
+    assert client.get("/api/models/active").json()["version_id"] == "bipartite-adaptive-002"
+
+
+def test_api_storage_is_empty_and_uses_temporary_directories(client: TestClient, tmp_path) -> None:
+    from app.api.deps import get_db_manager, get_model_trainer
+    from app.settings import data_dir, reports_dir
+
+    assert data_dir() == tmp_path / "data"
+    assert reports_dir() == tmp_path / "reports"
+    assert get_db_manager().db_path == str(tmp_path / "data" / "convcomp.db")
+    assert get_model_trainer().models_dir == str(tmp_path / "data" / "models")
+    assert client.get("/api/syllabi").json() == []
+    assert client.get("/api/dataset/statistics").json()["total_examples"] == 0

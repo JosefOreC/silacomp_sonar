@@ -17,7 +17,7 @@ def test_complete_e2e_system_flow(client: TestClient, sample_digital_pdf: str) -
     # 1. Health check
     res_health = client.get("/api/health")
     assert res_health.status_code == 200
-    assert res_health.json()["phase"] == 1
+    assert res_health.json()["phase"] == 3
 
     # 2. Cargar Sílabo Objetivo
     with open(sample_digital_pdf, "rb") as f:
@@ -129,3 +129,17 @@ def test_complete_e2e_system_flow(client: TestClient, sample_digital_pdf: str) -
     assert len(export_data) >= 1
     assert "human_decision" in export_data[0]
     assert "prediction_before" in export_data[0]
+    example = export_data[0]
+    assert example["objective_item_id"] == first_match["objective_item_id"]
+    assert example["compared_item_id"] == first_match["compared_item_id"]
+    assert example["source_university_obj"] == "Universidad Nacional de Ingeniería"
+    assert example["source_course_obj"] == "INF-201"
+    assert example["source_syllabus_obj"] == obj_id
+
+    import csv
+    import io
+    csv_response = client.get("/api/dataset/export?format=csv")
+    exported_csv = list(csv.DictReader(io.StringIO(csv_response.text)))[0]
+    assert exported_csv["objective_item_id"] == example["objective_item_id"]
+    assert exported_csv["source_university_obj"] == example["source_university_obj"]
+    assert exported_csv["source_course_obj"] == "INF-201"
