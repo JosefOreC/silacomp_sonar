@@ -19,6 +19,7 @@ from app.domain.exceptions import InsufficientDigitalTextError, PdfCorruptedErro
 from app.infrastructure.nlp.segmenter import SyllabusSegmenter
 from app.infrastructure.pdf.extractor import PyMuPdfExtractor
 from app.infrastructure.persistence.sqlite_syllabus_repository import SqliteSyllabusRepository
+from app.settings import data_dir
 
 router = APIRouter(prefix="/syllabi", tags=["Sílabos"])
 
@@ -45,7 +46,7 @@ async def upload_syllabus(
         )
 
     # Directorio de subida seguro
-    upload_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "data", "uploads")
+    upload_dir = str(data_dir() / "uploads")
     os.makedirs(upload_dir, exist_ok=True)
 
     syllabus_id = f"SYL-{uuid.uuid4().hex[:10].upper()}"

@@ -19,7 +19,7 @@ class CorrectionType(str, Enum):
     MANUAL_LINK = "MANUAL_LINK"                            # El usuario vinculó manualmente dos contenidos no emparejados
 
 
-@dataclass
+@dataclass(frozen=True)
 class Review:
     """
     Representa una validación o corrección humana sobre una correspondencia.
@@ -39,6 +39,8 @@ class Review:
     manual_compared_item_id: Optional[str] = None
 
     def __post_init__(self) -> None:
+        if not self.reviewer_id.strip():
+            raise ValueError("La revisión debe identificar al evaluador.")
         if not self.justification.strip():
             raise ValueError("Toda decisión o corrección humana debe incluir una justificación académica mínima.")
 
@@ -62,3 +64,12 @@ class DatasetExample:
     source_university_obj: Optional[str] = None
     source_university_cmp: Optional[str] = None
     created_at: Optional[datetime] = None
+    source_course_obj: Optional[str] = None
+    source_course_cmp: Optional[str] = None
+    source_syllabus_obj: Optional[str] = None
+    source_syllabus_cmp: Optional[str] = None
+    source_review_ids: list[str] = field(default_factory=list)
+    source_page_obj: Optional[int] = None
+    source_page_cmp: Optional[int] = None
+    source_syllabus_hash_obj: Optional[str] = None
+    source_syllabus_hash_cmp: Optional[str] = None

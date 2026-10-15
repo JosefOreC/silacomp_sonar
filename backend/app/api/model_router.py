@@ -10,15 +10,31 @@ from app.api.deps import (
     get_model_repository,
     get_model_trainer,
     get_review_repository,
+    get_reserved_evaluation_policy,
 )
 from app.api.schemas import ModelVersionResponse, TrainModelRequest
 from app.application.train_model_use_case import TrainModelUseCase
+from app.domain.scoring import BASELINE_VERSION, DEFAULT_WEIGHTS, DEFAULT_THRESHOLDS
 from app.infrastructure.ml.model_inference_service import ModelInferenceService
 from app.infrastructure.ml.supervised_trainer import SklearnSupervisedTrainer
 from app.infrastructure.persistence.sqlite_model_repository import SqliteModelVersionRepository
 from app.infrastructure.persistence.sqlite_review_repository import SqliteReviewRepository
+from app.application.reserved_evaluation_policy import ReservedEvaluationPolicy
 
 router = APIRouter(prefix="/models", tags=["Modelos de Aprendizaje Supervisado"])
+
+
+def _baseline_response() -> ModelVersionResponse:
+    """Describe el algoritmo disponible sin atribuirle resultados de un experimento."""
+    return ModelVersionResponse(
+        version_id=BASELINE_VERSION,
+        algorithm_name="Hybrid-Bipartite-Adaptive",
+        description="Motor heurístico con scoring adaptativo y asignación global bipartita.",
+        is_active=True,
+        created_at="2026-10-01T00:00:00",
+        metrics={"type": "heuristic_baseline", "evaluation_status": "not_evaluated"},
+        parameters={"weights": dict(DEFAULT_WEIGHTS), "thresholds": dict(DEFAULT_THRESHOLDS)},
+    )
 
 
 @router.get("", response_model=List[ModelVersionResponse])
@@ -27,24 +43,6 @@ def list_models(
 ) -> List[ModelVersionResponse]:
     """Lista todas las versiones de modelos registradas en el sistema."""
     versions = repo.list_all()
-    # Si aún no hay modelos entrenados, devolver al menos la información del baseline heurístico
-    if not versions:
-        return [
-            ModelVersionResponse(
-                version_id="bipartite-adaptive-002",
-                algorithm_name="Hybrid-Bipartite-Adaptive",
-                description="Motor heurístico base con asignación global bipartita (Algoritmo Húngaro) y pesos adaptativos.",
-                is_active=True,
-                created_at="2026-10-01T00:00:00",
-                metrics={
-                    "accuracy": 0.89,
-                    "f1_macro": 0.87,
-                    "type": "heuristic_baseline",
-                },
-                parameters={"w_sem": 0.45, "w_lex": 0.30, "w_key": 0.15, "w_struct": 0.10},
-            )
-        ]
-
     return [
         ModelVersionResponse(
             version_id=v.version_id,
@@ -56,7 +54,7 @@ def list_models(
             parameters=v.parameters,
         )
         for v in versions
-    ]
+    ] + ([_baseline_response()] if not any(v.is_active for v in versions) else [])
 
 
 @router.get("/active", response_model=ModelVersionResponse)
@@ -76,16 +74,7 @@ def get_active_model(
             parameters=active.parameters,
         )
 
-    # Fallback al baseline
-    return ModelVersionResponse(
-        version_id="bipartite-adaptive-002",
-        algorithm_name="Hybrid-Bipartite-Adaptive",
-        description="Motor heurístico base activo por defecto.",
-        is_active=True,
-        created_at="2026-10-01T00:00:00",
-        metrics={"type": "heuristic_baseline"},
-        parameters={"w_sem": 0.45, "w_lex": 0.30, "w_key": 0.15, "w_struct": 0.10},
-    )
+    return _baseline_response()
 
 
 @router.post("/train", response_model=ModelVersionResponse, status_code=status.HTTP_201_CREATED)
@@ -95,6 +84,7 @@ def train_model(
     model_repo: SqliteModelVersionRepository = Depends(get_model_repository),
     trainer: SklearnSupervisedTrainer = Depends(get_model_trainer),
     inference: ModelInferenceService = Depends(get_model_inference_service),
+    reserved_policy: ReservedEvaluationPolicy = Depends(get_reserved_evaluation_policy),
 ) -> ModelVersionResponse:
     """
     Ejecuta un ciclo de entrenamiento supervisado sobre las observaciones del dataset científico,
@@ -104,6 +94,8 @@ def train_model(
         dataset_repo=dataset_repo,
         model_version_repo=model_repo,
         trainer=trainer,
+        review_repo=dataset_repo,
+        reserved_policy=reserved_policy,
     )
     try:
         model_version, metrics = use_case.execute(
@@ -111,6 +103,7 @@ def train_model(
             test_size=request.test_size,
             use_bootstrap_if_sparse=request.use_bootstrap,
             auto_activate=request.auto_activate,
+            ground_truth_policy=request.ground_truth_policy,
         )
 
         if model_version.is_active:
@@ -139,16 +132,16 @@ def activate_model(
     inference: ModelInferenceService = Depends(get_model_inference_service),
 ) -> Dict[str, Any]:
     """Activa una versión de modelo existente para su uso en comparaciones futuras."""
-    success = repo.set_active_model(version_id)
-    if not success:
+    version = repo.get_by_id(version_id)
+    if version is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"La versión de modelo '{version_id}' no fue encontrada.",
         )
 
-    version = repo.get_by_id(version_id)
-    if version:
-        inference.load_model(version)
+    if not inference.load_model(version):
+        raise HTTPException(status_code=409, detail="No se puede cargar el artefacto del modelo; la versión activa no se cambió.")
+    repo.set_active_model(version_id)
 
     return {"status": "success", "message": f"Modelo {version_id} activado como versión de producción."}
 

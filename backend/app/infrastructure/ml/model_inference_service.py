@@ -4,23 +4,22 @@ Carga el modelo activo en memoria y calcula probabilidades calibradas para cada 
 """
 
 import os
+import io
 from typing import Any, Dict, Optional, Tuple
 import joblib
 import numpy as np
 
 from app.domain.comparison import MatchClassification
 from app.domain.model_version import ModelVersion
+from app.domain.ports import IModelInferenceService
+from app.settings import data_dir
 
 
-class ModelInferenceService:
+class ModelInferenceService(IModelInferenceService):
     """Ejecuta inferencia con modelos entrenados y calcula probabilidades para el caso de uso de comparación."""
 
     def __init__(self, models_dir: Optional[str] = None) -> None:
-        self.models_dir = models_dir or os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
-            "data",
-            "models",
-        )
+        self.models_dir = models_dir or str(data_dir() / "models")
         self._cached_version_id: Optional[str] = None
         self._cached_model_artifact: Optional[Dict[str, Any]] = None
 
@@ -29,17 +28,33 @@ class ModelInferenceService:
         if self._cached_version_id == version.version_id and self._cached_model_artifact is not None:
             return True
 
+        self._cached_version_id = None
+        self._cached_model_artifact = None
         artifact_path = version.artifact_path or os.path.join(self.models_dir, f"{version.version_id}.joblib")
         if not os.path.exists(artifact_path):
             return False
 
         try:
-            self._cached_model_artifact = joblib.load(artifact_path)
-            self._cached_version_id = version.version_id
-            return True
+            with open(artifact_path, "rb") as artifact:
+                content = artifact.read()
+            return self.load_artifact_bytes(content, version.version_id)
         except Exception:
             self._cached_model_artifact = None
             self._cached_version_id = None
+            return False
+
+    def load_artifact_bytes(self, content: bytes, version_id: str) -> bool:
+        """Carga exactamente los bytes cuya huella se registra en el experimento."""
+        self._cached_model_artifact = None
+        self._cached_version_id = None
+        try:
+            artifact = joblib.load(io.BytesIO(content))
+            if not isinstance(artifact, dict) or "model" not in artifact:
+                return False
+            self._cached_model_artifact = artifact
+            self._cached_version_id = version_id
+            return True
+        except Exception:
             return False
 
     def predict_pair(

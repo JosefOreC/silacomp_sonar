@@ -7,15 +7,19 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.comparison_router import router as comparison_router
 from app.api.dataset_router import router as dataset_router
+from app.api.ground_truth_router import router as ground_truth_router
+from app.api.active_learning_router import router as active_learning_router
+from app.api.scientific_evaluation_router import router as scientific_evaluation_router
 from app.api.model_router import router as model_router
 from app.api.review_router import router as review_router
 from app.api.syllabus_router import router as syllabus_router
 from app.infrastructure.persistence.database import DatabaseManager
+from app.settings import APP_PHASE, APP_VERSION
 
 app = FastAPI(
     title="ConvComp API — Sistema Inteligente de Comparación de Sílabos",
-    version="2.0.0",
-    description="Motor de pre-evaluación computacional explicable de correspondencia académica entre sílabos universitarios con soporte OCR y Aprendizaje Supervisado.",
+    version=APP_VERSION,
+    description="Pre-evaluación explicable de sílabos con OCR, aprendizaje supervisado, ground truth consensuado, evaluación interevaluador, aprendizaje activo y experimentos reservados reproducibles.",
 )
 
 # Configuración de CORS para desarrollo web
@@ -35,6 +39,9 @@ app.include_router(syllabus_router, prefix="/api")
 app.include_router(comparison_router, prefix="/api")
 app.include_router(review_router, prefix="/api")
 app.include_router(dataset_router, prefix="/api")
+app.include_router(ground_truth_router, prefix="/api")
+app.include_router(active_learning_router, prefix="/api")
+app.include_router(scientific_evaluation_router, prefix="/api")
 app.include_router(model_router, prefix="/api")
 
 
@@ -44,6 +51,6 @@ def health_check():
     return {
         "status": "healthy",
         "service": "ConvComp API",
-        "version": "1.0.0",
-        "phase": 1,
+        "version": APP_VERSION,
+        "phase": APP_PHASE,
     }

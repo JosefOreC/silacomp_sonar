@@ -31,15 +31,16 @@ class SqliteModelVersionRepository(IModelVersionRepository):
                 """
                 INSERT INTO model_versions (
                     version_id, algorithm_name, description, parameters_json,
-                    thresholds_json, metrics_json, is_active, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    thresholds_json, metrics_json, is_active, created_at, artifact_path
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(version_id) DO UPDATE SET
                     algorithm_name = excluded.algorithm_name,
                     description = excluded.description,
                     parameters_json = excluded.parameters_json,
                     thresholds_json = excluded.thresholds_json,
                     metrics_json = excluded.metrics_json,
-                    is_active = excluded.is_active;
+                    is_active = excluded.is_active,
+                    artifact_path = excluded.artifact_path;
                 """,
                 (
                     model_version.version_id,
@@ -50,6 +51,7 @@ class SqliteModelVersionRepository(IModelVersionRepository):
                     json.dumps(model_version.metrics),
                     1 if model_version.is_active else 0,
                     model_version.created_at.isoformat(),
+                    model_version.artifact_path,
                 ),
             )
             conn.commit()
@@ -105,4 +107,5 @@ class SqliteModelVersionRepository(IModelVersionRepository):
             is_active=bool(row["is_active"]),
             created_at=datetime.fromisoformat(row["created_at"]),
             metrics=json.loads(row["metrics_json"]) if row["metrics_json"] else {},
+            artifact_path=row["artifact_path"],
         )

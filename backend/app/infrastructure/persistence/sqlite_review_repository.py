@@ -5,6 +5,7 @@ Implementa los puertos IReviewRepository e IDatasetRepository.
 
 from datetime import datetime
 import json
+import sqlite3
 from typing import List, Optional
 import uuid
 
@@ -36,10 +37,7 @@ class SqliteReviewRepository(IReviewRepository, IDatasetRepository):
                     reviewer_id, model_version, created_at,
                     manual_obj_id, manual_cmp_id
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    human_decision = excluded.human_decision,
-                    correction_type = excluded.correction_type,
-                    justification = excluded.justification;
+                ;
                 """,
                 (
                     review.id,
@@ -62,17 +60,22 @@ class SqliteReviewRepository(IReviewRepository, IDatasetRepository):
             cmp_text = ""
             features: dict = {}
             prediction_label = review.prediction_before.value if review.prediction_before else "NONE"
+            obj_id = review.manual_objective_item_id or "UNKNOWN"
+            cmp_id = review.manual_compared_item_id or "UNKNOWN"
 
             if review.match_id:
                 cursor.execute(
                     """
-                    SELECT objective_snippet, compared_snippet, semantic_sim, lexical_sim, keyword_overlap, structural_sim
+                    SELECT objective_item_id, compared_item_id, objective_snippet, compared_snippet,
+                           semantic_sim, lexical_sim, keyword_overlap, structural_sim
                     FROM content_matches WHERE id = ?;
                     """,
                     (review.match_id,),
                 )
                 match_row = cursor.fetchone()
                 if match_row:
+                    obj_id = match_row["objective_item_id"]
+                    cmp_id = match_row["compared_item_id"]
                     obj_text = match_row["objective_snippet"]
                     cmp_text = match_row["compared_snippet"]
                     features = {
@@ -82,6 +85,27 @@ class SqliteReviewRepository(IReviewRepository, IDatasetRepository):
                         "structural_sim": match_row["structural_sim"],
                     }
 
+            if not review.match_id:
+                for item_id, is_objective in ((obj_id, True), (cmp_id, False)):
+                    cursor.execute("SELECT text FROM content_items WHERE id = ?", (item_id,))
+                    item = cursor.fetchone()
+                    if item and is_objective:
+                        obj_text = item["text"]
+                    elif item:
+                        cmp_text = item["text"]
+
+            cursor.execute(
+                """SELECT obj.university AS obj_uni, cmp.university AS cmp_uni,
+                          COALESCE(NULLIF(obj.course_code, ''), NULLIF(obj.course_name, '')) AS obj_course,
+                          COALESCE(NULLIF(cmp.course_code, ''), NULLIF(cmp.course_name, '')) AS cmp_course,
+                          c.objective_syllabus_id AS obj_syllabus, c.compared_syllabus_id AS cmp_syllabus
+                   FROM comparisons c
+                   JOIN syllabi obj ON obj.id = c.objective_syllabus_id
+                   JOIN syllabi cmp ON cmp.id = c.compared_syllabus_id
+                   WHERE c.id = ?""", (review.comparison_id,),
+            )
+            provenance = cursor.fetchone()
+
             # Insertar en dataset_examples si no existe ya para esta review
             dataset_id = f"DATA-{uuid.uuid4().hex[:10].upper()}"
             cursor.execute(
@@ -90,24 +114,29 @@ class SqliteReviewRepository(IReviewRepository, IDatasetRepository):
                     id, review_id, objective_item_id, compared_item_id,
                     objective_text, compared_text, features_json,
                     prediction_label, ground_truth_label, model_version,
-                    source_university_obj, source_university_cmp, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    source_university_obj, source_university_cmp, created_at,
+                    source_course_obj, source_course_cmp, source_syllabus_obj, source_syllabus_cmp
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO NOTHING;
                 """,
                 (
                     dataset_id,
                     review.id,
-                    review.manual_objective_item_id or (review.match_id or "UNKNOWN"),
-                    review.manual_compared_item_id or (review.match_id or "UNKNOWN"),
+                    obj_id,
+                    cmp_id,
                     obj_text,
                     cmp_text,
                     json.dumps(features),
                     prediction_label,
                     review.human_decision.value,
                     review.model_version,
-                    None,
-                    None,
+                    provenance["obj_uni"] if provenance else None,
+                    provenance["cmp_uni"] if provenance else None,
                     datetime.now().isoformat(),
+                    provenance["obj_course"] if provenance else None,
+                    provenance["cmp_course"] if provenance else None,
+                    provenance["obj_syllabus"] if provenance else None,
+                    provenance["cmp_syllabus"] if provenance else None,
                 ),
             )
 
@@ -161,6 +190,25 @@ class SqliteReviewRepository(IReviewRepository, IDatasetRepository):
             )
 
     # Métodos de IDatasetRepository
+    def list_all(self, limit: int = 500, offset: int = 0) -> List[Review]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM reviews ORDER BY created_at, id LIMIT ? OFFSET ?", (limit, offset),
+            ).fetchall()
+            return [self._map_review(row) for row in rows]
+
+    @staticmethod
+    def _map_review(row: sqlite3.Row) -> Review:
+        return Review(
+            id=row["id"], comparison_id=row["comparison_id"], match_id=row["match_id"],
+            prediction_before=MatchClassification(row["prediction_before"]) if row["prediction_before"] else None,
+            human_decision=MatchClassification(row["human_decision"]),
+            correction_type=CorrectionType(row["correction_type"]), justification=row["justification"],
+            reviewer_id=row["reviewer_id"], model_version=row["model_version"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+            manual_objective_item_id=row["manual_obj_id"], manual_compared_item_id=row["manual_cmp_id"],
+        )
+
     def save_example(self, example: DatasetExample) -> None:
         with self.db.get_connection() as conn:
             cursor = conn.cursor()
@@ -170,10 +218,10 @@ class SqliteReviewRepository(IReviewRepository, IDatasetRepository):
                     id, review_id, objective_item_id, compared_item_id,
                     objective_text, compared_text, features_json,
                     prediction_label, ground_truth_label, model_version,
-                    source_university_obj, source_university_cmp, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    ground_truth_label = excluded.ground_truth_label;
+                    source_university_obj, source_university_cmp, created_at,
+                    source_course_obj, source_course_cmp, source_syllabus_obj, source_syllabus_cmp
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ;
                 """,
                 (
                     example.id,
@@ -189,6 +237,10 @@ class SqliteReviewRepository(IReviewRepository, IDatasetRepository):
                     example.source_university_obj,
                     example.source_university_cmp,
                     (example.created_at or datetime.now()).isoformat(),
+                    example.source_course_obj,
+                    example.source_course_cmp,
+                    example.source_syllabus_obj,
+                    example.source_syllabus_cmp,
                 ),
             )
             conn.commit()
@@ -203,22 +255,49 @@ class SqliteReviewRepository(IReviewRepository, IDatasetRepository):
     def list_examples(self, limit: int = 100, offset: int = 0) -> List[DatasetExample]:
         with self.db.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM dataset_examples ORDER BY created_at DESC LIMIT ? OFFSET ?;", (limit, offset))
+            # Recuperar también procedencia histórica sin reescribir predicciones ni datos originales.
+            cursor.execute(
+                """SELECT d.*, m.objective_item_id AS match_obj_id, m.compared_item_id AS match_cmp_id,
+                          obj.sha256_hash AS obj_hash, cmp.sha256_hash AS cmp_hash,
+                          COALESCE(m.objective_page, obj_item.page_start) AS obj_page,
+                          COALESCE(m.compared_page, cmp_item.page_start) AS cmp_page,
+                          obj.university AS obj_uni, cmp.university AS cmp_uni,
+                          COALESCE(NULLIF(obj.course_code, ''), NULLIF(obj.course_name, '')) AS obj_course,
+                          COALESCE(NULLIF(cmp.course_code, ''), NULLIF(cmp.course_name, '')) AS cmp_course,
+                          c.objective_syllabus_id AS obj_syllabus, c.compared_syllabus_id AS cmp_syllabus
+                   FROM dataset_examples d
+                   LEFT JOIN reviews r ON r.id = d.review_id
+                   LEFT JOIN content_matches m ON m.id = r.match_id
+                   LEFT JOIN content_items obj_item ON obj_item.id = COALESCE(m.objective_item_id, d.objective_item_id)
+                   LEFT JOIN content_items cmp_item ON cmp_item.id = COALESCE(m.compared_item_id, d.compared_item_id)
+                   LEFT JOIN comparisons c ON c.id = r.comparison_id
+                   LEFT JOIN syllabi obj ON obj.id = c.objective_syllabus_id
+                   LEFT JOIN syllabi cmp ON cmp.id = c.compared_syllabus_id
+                   ORDER BY d.created_at DESC, d.id LIMIT ? OFFSET ?""", (limit, offset),
+            )
             rows = cursor.fetchall()
             return [
                 DatasetExample(
                     id=r["id"],
                     review_id=r["review_id"],
-                    objective_item_id=r["objective_item_id"],
-                    compared_item_id=r["compared_item_id"],
+                    objective_item_id=r["match_obj_id"] or r["objective_item_id"],
+                    compared_item_id=r["match_cmp_id"] or r["compared_item_id"],
                     objective_text=r["objective_text"],
                     compared_text=r["compared_text"],
                     features=json.loads(r["features_json"]),
                     prediction_label=r["prediction_label"],
                     ground_truth_label=r["ground_truth_label"],
                     model_version=r["model_version"],
-                    source_university_obj=r["source_university_obj"],
-                    source_university_cmp=r["source_university_cmp"],
+                    source_university_obj=r["source_university_obj"] or r["obj_uni"],
+                    source_university_cmp=r["source_university_cmp"] or r["cmp_uni"],
+                    source_course_obj=r["source_course_obj"] or r["obj_course"],
+                    source_course_cmp=r["source_course_cmp"] or r["cmp_course"],
+                    source_syllabus_obj=r["source_syllabus_obj"] or r["obj_syllabus"],
+                    source_syllabus_cmp=r["source_syllabus_cmp"] or r["cmp_syllabus"],
+                    source_page_obj=r["obj_page"],
+                    source_page_cmp=r["cmp_page"],
+                    source_syllabus_hash_obj=r["obj_hash"],
+                    source_syllabus_hash_cmp=r["cmp_hash"],
                     created_at=datetime.fromisoformat(r["created_at"]),
                 )
                 for r in rows

@@ -81,7 +81,8 @@ class DatasetService:
             y_val = LABEL_TO_INT.get(label, 0)
             y_vals.append(y_val)
 
-        return np.array(X_rows, dtype=np.float32), np.array(y_vals, dtype=np.int64), FEATURE_NAMES
+        # Conservar decimales persistidos: float32 puede desplazar 0.70 por debajo del umbral adaptativo.
+        return np.array(X_rows, dtype=np.float64), np.array(y_vals, dtype=np.int64), FEATURE_NAMES
 
     def export_to_csv(self, examples: List[DatasetExample]) -> str:
         """Exporta las observaciones en formato CSV plano compatible con herramientas de análisis de datos."""
@@ -91,9 +92,17 @@ class DatasetService:
         headers = [
             "id",
             "review_id",
+            "objective_item_id",
+            "compared_item_id",
             "prediction_label",
             "ground_truth_label",
             "model_version",
+            "source_university_obj",
+            "source_university_cmp",
+            "source_course_obj",
+            "source_course_cmp",
+            "source_syllabus_obj",
+            "source_syllabus_cmp",
             "semantic_sim",
             "lexical_sim",
             "asymmetric_containment",
@@ -108,9 +117,17 @@ class DatasetService:
             writer.writerow([
                 ex.id,
                 ex.review_id,
+                ex.objective_item_id,
+                ex.compared_item_id,
                 ex.prediction_label,
                 ex.ground_truth_label,
                 ex.model_version,
+                ex.source_university_obj,
+                ex.source_university_cmp,
+                ex.source_course_obj,
+                ex.source_course_cmp,
+                ex.source_syllabus_obj,
+                ex.source_syllabus_cmp,
                 feat.get("semantic_sim", 0.0),
                 feat.get("lexical_sim", 0.0),
                 feat.get("asymmetric_containment", feat.get("lexical_sim", 0.0)),

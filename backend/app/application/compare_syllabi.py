@@ -4,6 +4,7 @@ Implementa el motor híbrido, scoring ponderado, clasificación y análisis bidi
 """
 
 from datetime import datetime
+from dataclasses import replace
 import re
 from typing import Dict, List, Optional, Set, Tuple
 import uuid
@@ -19,25 +20,14 @@ from app.domain.comparison import (
     UnmatchedItem,
 )
 from app.domain.content import ContentItem
-from app.domain.ports import IComparisonRepository
+from app.domain.ports import IComparisonRepository, IModelInferenceService
+from app.domain.scoring import (
+    BASELINE_VERSION, DEFAULT_WEIGHTS, DEFAULT_THRESHOLDS,
+    adaptive_pair_score, classify_score, has_content_affinity as content_affinity,
+)
 from app.infrastructure.nlp.normalizer import TextNormalizer
 from app.infrastructure.nlp.vector_service import NlpVectorService
 from app.infrastructure.pdf.spatial_locator import SpatialLocatorService
-
-
-DEFAULT_WEIGHTS = {
-    "semantic": 0.45,
-    "lexical": 0.30,
-    "keyword": 0.15,
-    "structural": 0.10,
-}
-
-DEFAULT_THRESHOLDS = {
-    "match": 0.75,
-    "partial": 0.58,
-    "uncertain": 0.45,
-}
-
 
 
 class CompareSyllabiUseCase:
@@ -48,8 +38,8 @@ class CompareSyllabiUseCase:
         vector_service: NlpVectorService,
         comparison_repository: Optional[IComparisonRepository] = None,
         spatial_locator: Optional[SpatialLocatorService] = None,
-        model_version: str = "bipartite-adaptive-002",
-        inference_service: Optional[object] = None,
+        model_version: str = BASELINE_VERSION,
+        inference_service: Optional[IModelInferenceService] = None,
     ) -> None:
         self.vector_service = vector_service
         self.repository = comparison_repository
@@ -75,42 +65,16 @@ class CompareSyllabiUseCase:
         - Si hay contención léxica directa alta (lex_sim >= 0.85) o afinidad semántica concluyente (sem_sim >= 0.85),
           se garantiza un piso representativo de convalidación académica (>= 0.80).
         """
-        w = dict(base_weights)
-        if sem_sim >= 0.75 or lex_sim >= 0.70:
-            w["structural"] = 0.0
-            w["semantic"] = 0.50
-            w["lexical"] = 0.35
-            w["keyword"] = 0.15
-        elif sem_sim >= 0.60 or lex_sim >= 0.45:
-            w["structural"] = 0.05
-            w["semantic"] = 0.50
-            w["lexical"] = 0.30
-            w["keyword"] = 0.15
-
-        composite = (
-            w.get("semantic", 0.45) * sem_sim
-            + w.get("lexical", 0.30) * lex_sim
-            + w.get("keyword", 0.15) * key_sim
-            + w.get("structural", 0.10) * est_sim
-        )
-
-        # Garantizar piso de correspondencia ante contención directa o equivalencia terminológica
-        if lex_sim >= 0.85 or sem_sim >= 0.85:
-            composite = max(composite, 0.80)
-        elif lex_sim >= 0.65 or sem_sim >= 0.65:
-            composite = max(composite, 0.60)
-
-        composite = max(0.0, min(1.0, round(composite, 4)))
-
-        breakdown = ScoreBreakdown(
-            semantic_similarity=sem_sim,
-            lexical_similarity=lex_sim,
-            keyword_overlap=key_sim,
-            structural_similarity=est_sim,
-            composite_score=composite,
-            weights=w,
-        )
-        return composite, breakdown
+        score, breakdown = adaptive_pair_score(sem_sim, lex_sim, key_sim, est_sim, base_weights)
+        if self.inference_service is not None:
+            prediction = self.inference_service.predict_pair({
+                "semantic_sim": sem_sim, "lexical_sim": lex_sim, "asymmetric_containment": lex_sim,
+                "keyword_overlap": key_sim, "structural_sim": est_sim,
+            })
+            if prediction is not None:
+                score = max(0.0, min(1.0, round(float(prediction[1]), 4)))
+                breakdown = replace(breakdown, composite_score=score)
+        return score, breakdown
 
     def execute(
         self,
@@ -390,9 +354,7 @@ class CompareSyllabiUseCase:
 
             chosen_score, chosen_cmp, chosen_bd, chosen_ev = chosen_cand
             has_content_affinity = (
-                chosen_bd.semantic_similarity >= 0.40
-                or chosen_bd.lexical_similarity >= 0.25
-                or chosen_bd.keyword_overlap >= 0.15
+                content_affinity(chosen_bd.semantic_similarity, chosen_bd.lexical_similarity, chosen_bd.keyword_overlap)
             )
 
             if chosen_score >= th["uncertain"] and has_content_affinity:
@@ -411,9 +373,7 @@ class CompareSyllabiUseCase:
             pair_key = (obj_item.id, cmp_item.id)
             cands = candidates_by_obj.get(obj_item.id, [])
             has_content_affinity = (
-                breakdown.semantic_similarity >= 0.40
-                or breakdown.lexical_similarity >= 0.25
-                or breakdown.keyword_overlap >= 0.15
+                content_affinity(breakdown.semantic_similarity, breakdown.lexical_similarity, breakdown.keyword_overlap)
             )
 
             classification = self._classify(score, th, has_content_affinity)
@@ -515,9 +475,7 @@ class CompareSyllabiUseCase:
                     continue
 
                 sec_has_content_affinity = (
-                    sec_breakdown.semantic_similarity >= 0.40
-                    or sec_breakdown.lexical_similarity >= 0.25
-                    or sec_breakdown.keyword_overlap >= 0.15
+                    content_affinity(sec_breakdown.semantic_similarity, sec_breakdown.lexical_similarity, sec_breakdown.keyword_overlap)
                 )
                 sec_classification = self._classify(sec_score, th, sec_has_content_affinity)
                 if sec_classification not in (MatchClassification.MATCH, MatchClassification.PARTIAL_MATCH):
@@ -679,11 +637,4 @@ class CompareSyllabiUseCase:
         has_content_affinity: bool = True,
     ) -> MatchClassification:
         """Asigna la etiqueta categórica según los umbrales configurados y la afinidad de contenido."""
-        if score >= thresholds["match"] and has_content_affinity:
-            return MatchClassification.MATCH
-        if score >= thresholds["partial"] and has_content_affinity:
-            return MatchClassification.PARTIAL_MATCH
-        if score >= thresholds["uncertain"]:
-            return MatchClassification.UNCERTAIN
-        return MatchClassification.NO_MATCH
-
+        return classify_score(score, thresholds, has_content_affinity)

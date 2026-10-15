@@ -180,13 +180,14 @@ def create_comparison(
         )
 
     active_model = model_repo.get_active_model()
-    model_version_id = active_model.version_id if active_model else "bipartite-adaptive-002"
+    model_loaded = active_model is not None and inference_service.load_model(active_model)
+    model_version_id = active_model.version_id if model_loaded else "bipartite-adaptive-002"
 
     use_case = CompareSyllabiUseCase(
         vector_service=vector_service,
         comparison_repository=comp_repo,
         model_version=model_version_id,
-        inference_service=inference_service,
+        inference_service=inference_service if model_loaded else None,
     )
 
     comparison = use_case.execute(
@@ -423,7 +424,9 @@ def get_pdf_report(
     if not obj_syl or not cmp_syl:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sílabos asociados no encontrados.")
 
-    generator = PdfReportGenerator(output_dir="data/reports")
+    from app.settings import reports_dir
+
+    generator = PdfReportGenerator(output_dir=str(reports_dir()))
     report = generator.generate(comp, obj_syl, cmp_syl)
     return FileResponse(
         report.file_path,

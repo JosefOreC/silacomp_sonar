@@ -8,9 +8,11 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 from app.domain.syllabus import Syllabus
 from app.domain.content import ContentItem
-from app.domain.comparison import Comparison, ContentMatch, ScoreBreakdown, MatchEvidence
+from app.domain.comparison import Comparison, ContentMatch, MatchClassification, ScoreBreakdown, MatchEvidence
 from app.domain.review import Review, DatasetExample
 from app.domain.model_version import ModelVersion, Report, ReportFormat
+from app.domain.annotation_batch import AnnotationBatch, AnnotationBatchCompletion
+from app.domain.scientific_evaluation import EvaluationSnapshot, EvaluationExperiment
 
 
 @dataclass(frozen=True)
@@ -89,6 +91,10 @@ class ISyllabusRepository(ABC):
     def list_all(self) -> List[Syllabus]:
         pass
 
+    @abstractmethod
+    def get_content_items(self, syllabus_id: str) -> List[ContentItem]:
+        pass
+
 
 class IComparisonRepository(ABC):
     """Puerto para persistencia y consulta de comparaciones y correspondencias."""
@@ -119,6 +125,11 @@ class IReviewRepository(ABC):
 
     @abstractmethod
     def get_by_id(self, review_id: str) -> Optional[Review]:
+        pass
+
+    @abstractmethod
+    def list_all(self, limit: int = 500, offset: int = 0) -> List[Review]:
+        """Lista eventos de revisión sin truncar la consulta a una comparación."""
         pass
 
 
@@ -180,8 +191,83 @@ class ISupervisedModelTrainer(ABC):
         algorithm: str = "calibrated_logistic",
         test_size: float = 0.2,
         random_state: int = 42,
+        ground_truth_policy: str = "individual",
     ) -> Tuple[ModelVersion, Dict[str, Any]]:
         """
         Entrena el modelo sobre los ejemplos, evalúa métricas vs baseline y retorna la versión registrada con su reporte de métricas.
         """
+        pass
+
+
+class IModelInferenceService(ABC):
+    @abstractmethod
+    def predict_pair(self, features: Dict[str, float]) -> Optional[Tuple[MatchClassification, float, Dict[str, float]]]:
+        pass
+
+
+class IAnnotationBatchRepository(ABC):
+    @abstractmethod
+    def save(self, batch: AnnotationBatch) -> None:
+        pass
+
+    @abstractmethod
+    def get_by_id(self, batch_id: str) -> Optional[AnnotationBatch]:
+        pass
+
+    @abstractmethod
+    def list_recent(self, limit: int = 20) -> List[AnnotationBatch]:
+        pass
+
+    @abstractmethod
+    def get_completion(self, batch_id: str) -> Optional[AnnotationBatchCompletion]:
+        pass
+
+    @abstractmethod
+    def complete(self, completion: AnnotationBatchCompletion) -> None:
+        pass
+
+
+class IScientificEvaluationRepository(ABC):
+    @abstractmethod
+    def save_snapshot(self, snapshot: EvaluationSnapshot) -> None:
+        pass
+
+    @abstractmethod
+    def get_snapshot(self, snapshot_id: str) -> Optional[EvaluationSnapshot]:
+        pass
+
+    @abstractmethod
+    def list_snapshots(self) -> List[EvaluationSnapshot]:
+        pass
+
+    @abstractmethod
+    def save_experiment(self, experiment: EvaluationExperiment) -> None:
+        pass
+
+    @abstractmethod
+    def get_experiment(self, experiment_id: str) -> Optional[EvaluationExperiment]:
+        pass
+
+    @abstractmethod
+    def list_experiments(self, limit: int = 20) -> List[EvaluationExperiment]:
+        pass
+
+
+class IComparisonEvaluationEngine(ABC):
+    @abstractmethod
+    def fingerprint(self) -> Dict[str, Any]:
+        pass
+
+    @abstractmethod
+    def capture(self, case: Dict[str, Any]) -> Dict[str, Any]:
+        pass
+
+    @abstractmethod
+    def evaluate(self, case: Dict[str, Any], model: Optional[ModelVersion]) -> Tuple[Comparison, Dict[str, Any]]:
+        pass
+
+
+class IReservedEvaluationPolicy(ABC):
+    @abstractmethod
+    def filter_examples(self, examples: List[DatasetExample]) -> List[DatasetExample]:
         pass

@@ -5,16 +5,14 @@ Gestor de base de datos SQLite para persistencia relacional local (Fase 1).
 import os
 import sqlite3
 from typing import Optional
-
-
-DEFAULT_DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "data", "convcomp.db")
+from app.settings import data_dir
 
 
 class DatabaseManager:
     """Administra conexiones y migraciones de esquema para SQLite."""
 
     def __init__(self, db_path: Optional[str] = None) -> None:
-        self.db_path = db_path or DEFAULT_DB_PATH
+        self.db_path = db_path or str(data_dir() / "convcomp.db")
         os.makedirs(os.path.dirname(os.path.abspath(self.db_path)), exist_ok=True)
         self.init_schema()
 
@@ -171,6 +169,10 @@ class DatabaseManager:
             """)
 
 
+            model_columns = {row[1] for row in cursor.execute("PRAGMA table_info(model_versions)")}
+            if "artifact_path" not in model_columns:
+                cursor.execute("ALTER TABLE model_versions ADD COLUMN artifact_path TEXT")
+
             # Contenidos no correspondidos (brechas en ambos sentidos)
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS unmatched_items (
@@ -229,6 +231,12 @@ class DatabaseManager:
             );
             """)
 
+            # Migración aditiva para conservar procedencia académica en exportaciones/importaciones.
+            dataset_columns = {row[1] for row in cursor.execute("PRAGMA table_info(dataset_examples)")}
+            for column in ("source_course_obj", "source_course_cmp", "source_syllabus_obj", "source_syllabus_cmp"):
+                if column not in dataset_columns:
+                    cursor.execute(f"ALTER TABLE dataset_examples ADD COLUMN {column} TEXT")
+
             # Registro de Informes Formales Generados
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS reports (
@@ -242,6 +250,38 @@ class DatabaseManager:
                 file_size_bytes INTEGER DEFAULT 0,
                 FOREIGN KEY (comparison_id) REFERENCES comparisons(id) ON DELETE CASCADE
             );
+            """)
+
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS annotation_batches (
+                id TEXT PRIMARY KEY,
+                snapshot_json TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS annotation_batch_completions (
+                batch_id TEXT PRIMARY KEY REFERENCES annotation_batches(id),
+                snapshot_json TEXT NOT NULL
+            )
+            """)
+
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS evaluation_snapshots (
+                id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at TEXT NOT NULL,
+                content_hash TEXT NOT NULL, payload_json TEXT NOT NULL
+            )
+            """)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS evaluation_experiments (
+                id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL REFERENCES evaluation_snapshots(id),
+                created_at TEXT NOT NULL, report_json TEXT NOT NULL
+            )
+            """)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS evaluation_model_manifests (
+                version_id TEXT PRIMARY KEY, manifest_hash TEXT NOT NULL
+            )
             """)
 
             conn.commit()
