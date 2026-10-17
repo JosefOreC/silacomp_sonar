@@ -58,6 +58,8 @@
 | **TOTAL CON FASE 3 PLANIFICADA** | **Completado** | **100%** | **105** | **105** |
 | 29. Fase 3.2: Validación integrada en navegador | Completado | 100% | 2 | 2 |
 | **TOTAL CON VALIDACIÓN INTEGRADA** | **Completado** | **100%** | **107** | **107** |
+| 30. Docker y análisis SonarQube | Completado | 100% | 4 | 4 |
+| **TOTAL CON DESPLIEGUE Y CALIDAD** | **Completado** | **100%** | **111** | **111** |
 
 ---
 
@@ -292,6 +294,12 @@
 - [x] **TASK-29.2:** Corregir incidencias reproducibles del flujo y documentar el procedimiento de validación y sus límites. *(Completado el 2026-10-15)*
 
 La Fase 4 (usuarios, PostgreSQL y gestión documental) permanece fuera del alcance de estos paquetes. El avance de Fase 3 se refiere a implementación; la anotación académica real y los experimentos institucionales requieren datos revisados.
+
+### Paquete 30: Docker y análisis SonarQube
+- [x] **TASK-30.1:** Preparar Dockerfiles y Compose con persistencia, proxy web y comprobaciones de salud; validar configuración. *(Configuración Compose validada el 2026-10-15; construcción y ejecución pendientes en TASK-30.3)*
+- [x] **TASK-30.2:** Configurar SonarQube, PostgreSQL, escáner y cobertura Python con instrucciones de ejecución. *(Configuración validada el 2026-10-15; generación efectiva de cobertura y análisis pendientes en TASK-30.3)*
+- [x] **TASK-30.3:** Construir y arrancar los contenedores, comprobar persistencia, generar reportes de cobertura y ejecutar el análisis real de SonarQube. *(Completado el 2026-10-15: 99 pruebas aprobadas y análisis finalizado; hallazgos documentados en RESULTADO_SONARQUBE.md)*
+- [x] **TASK-30.4:** Publicar Docker en localhost:5173, unificar la configuración y documentación de acceso y comprobar la interfaz en navegador. *(Completado el 2026-10-15: Chromium, consultas API y contenedores saludables)*
 
 ## Bitácora de Sesiones de Trabajo
 
@@ -926,18 +934,62 @@ La Fase 4 (usuarios, PostgreSQL y gestión documental) permanece fuera del alcan
   - Definir el alcance y criterios de aceptación del siguiente incremento de Fase 4 según el roadmap.
   - Ejecutar experimentos institucionales cuando se disponga de matrices exhaustivas y fuentes de entrenamiento independientes.
 
+### Sesión 25 — 2026-10-15
+- **Objetivos de la sesión:** Preparar los archivos de despliegue Docker y el análisis SonarQube solicitados.
+- **Tareas completadas:**
+  - `TASK-30.1`: Dockerfiles de API y frontend, Compose con volúmenes persistentes, usuarios sin privilegios, proxy Nginx para `/api/` y comprobaciones de salud. Contexto de construcción sin datos locales ni secretos.
+  - `TASK-30.2`: Compose independiente de SonarQube y PostgreSQL 17, servicio de pruebas Python con pytest-cov, escáner con espera de Quality Gate, configuración de alcance Python/TypeScript y reportes relativos. Variables de ejemplo, README y guía `DOCKER_SONARQUBE.md`.
+- **Resultados de validación:**
+  - Ambos archivos Compose aceptados por `docker compose config --quiet`, incluido el perfil de herramientas; contraseña ficticia usada solo en el proceso de validación.
+  - Suite de backend en almacenamiento temporal y modo offline: **99 pruebas aprobadas en 48.38 s**, dos advertencias de deprecación de dependencias existentes.
+  - `npm.cmd run build` y `npm.cmd run lint`: correctos. No se modificó la lógica de aplicación ni se añadieron pruebas que repliquen la configuración.
+  - `git diff --check`: correcto. No se ejecutaron contenedores ni se generaron resultados de SonarQube.
+- **Decisiones técnicas adoptadas:**
+  - Mantener SQLite para la aplicación y reservar PostgreSQL para SonarQube. Uvicorn con un trabajador, frontend compilado con Node 24 y ruta relativa `/api`.
+  - Persistir base, PDF, modelos supervisados, reportes y caché de embeddings en volúmenes Docker. Instancias nuevas sin importación automática de los datos de desarrollo.
+  - Importar cobertura Python real cuando se genere; incluir el frontend en el análisis sin atribuirle cobertura inexistente. Escáner con fuentes de solo lectura y directorio temporal escribible.
+- **Bloqueadores / Riesgos identificados:**
+  - `TASK-30.3` pendiente: el motor Docker no responde en su tubería local. No se acreditan construcción, arranque, persistencia ni análisis real.
+  - La instalación local de pytest-cov se quedó detenida descargando metadatos y se canceló; no se generó el XML de cobertura. Dependencia declarada y comandos de generación documentados para el entorno de ejecución.
+  - SonarQube requiere una contraseña propia de PostgreSQL, inicialización del administrador y token de proyecto. Las etiquetas de imágenes predeterminadas son actualizables; fijar versiones o digest revisados para despliegues repetibles.
+- **Próximas tareas para la siguiente sesión:**
+  - Iniciar Docker Desktop con contenedores Linux, construir y arrancar la aplicación y verificar persistencia mediante recreación.
+  - Inicializar SonarQube, ejecutar pruebas con cobertura, analizar el proyecto y revisar los hallazgos y el Quality Gate reales antes de cerrar `TASK-30.3`.
 
+### Sesión 26 — 2026-10-15
+- **Objetivos de la sesión:** Continuar con Docker disponible, validar el despliegue y ejecutar el análisis SonarQube real.
+- **Tareas completadas:**
+  - `TASK-30.3`: imágenes construidas, cuatro servicios saludables, comprobación HTTP de frontend y API, carga y descarga de PDF sintético y persistencia de SQLite y del archivo tras recrear ambos contenedores.
+  - Creación de `.env` local con contraseña aleatoria de PostgreSQL, inicialización de SonarQube, reemplazo de la clave inicial de administrador y generación del token del proyecto; secretos guardados únicamente en `.env`, excluido de Git.
+  - Corrección de `.dockerignore`: `.coverage*` también excluía `.coveragerc`; sustituido por los patrones específicos de archivos de datos de cobertura.
+  - Preparación del modelo real de embeddings en la etapa Docker `test`; la prueba de paráfrasis fallaba en la primera ejecución por ausencia de ese modelo en modo offline. Se conserva la lógica de aplicación y las aserciones de pruebas.
+- **Resultados de validación:**
+  - **99 pruebas aprobadas en Docker en 45.63 s**, sin fallos ni omisiones, dos advertencias de deprecación de dependencias. Cobertura de líneas del backend: **90.03%**; ramas: **72.68%**; combinada: **86.67%**. Reportes XML generados e importados por SonarQube.
+  - SonarQube **26.10.0.133078** y escáner **8.1.0.6389**: ejecución exitosa con código 0, Quality Gate `PASSED`, 4 incidencias BUG, 43 CODE_SMELL, 0 vulnerabilidades detectadas y 1.1% de duplicación. Cobertura global: **75.0%**, incluyendo frontend sin reporte de cobertura.
+  - Primer análisis con `conditions: []`: el gate no evaluó condiciones. Los 47 hallazgos requieren revisión; no se acredita su resolución. Informe y prioridades en `RESULTADO_SONARQUBE.md`.
+  - Frontend en `http://localhost:18080`, API 3.2.1 saludable, navegación SPA y PDF verificados antes y después de recreación. `pip check` en la API: correcto.
+- **Decisiones técnicas adoptadas:**
+  - Cambiar únicamente el puerto de esta instancia mediante `APP_PORT=18080` porque Windows rechazó publicar 8080; conservar el puerto predeterminado del archivo de ejemplo.
+  - Precargar embeddings solo en la imagen de pruebas y ejecutarlos offline; producción conserva su caché persistente independiente. No rebajar umbrales ni reemplazar la prueba de paráfrasis por datos simulados.
+  - Conservar logs, XML, métricas JSON y prueba de persistencia en `.reports/`, excluido de Git. Dejar aplicación y SonarQube en ejecución para revisión del usuario.
+- **Bloqueadores / Riesgos identificados:**
+  - Sin bloqueadores para el Paquete 30. Los hallazgos del análisis quedan pendientes de revisión; las 26 incidencias CRITICAL señalan campos Optional sin valor predeterminado en modelos de respuesta y requieren decidir el contrato antes de modificarlos.
+  - No se ejecutó Playwright ni análisis de dependencias SCA en esta sesión. La cobertura de frontend requiere instrumentación adicional.
+- **Próximas tareas para la siguiente sesión:**
+  - Revisar las cuatro incidencias de fiabilidad y los contratos de respuesta señalados por SonarQube.
+  - Definir una referencia de código nuevo y condiciones efectivas de Quality Gate para análisis posteriores.
 
-
-
-
-
-
-
-
-
-
-
-
-
+### Sesión 27 — 2026-10-15
+- **Objetivos de la sesión:** Resolver el acceso al frontend Docker desde la dirección localhost:5173 indicada por el usuario y dejar el proyecto en ejecución.
+- **Tareas completadas:**
+  - `TASK-30.4`: publicar el frontend en 5173, actualizar `.env`, `.env.example`, el valor predeterminado de Compose y las direcciones de README y guías.
+  - Documentar el comando de arranque completo y conservar el archivo `.env` existente al repetir las instrucciones de preparación.
+- **Resultados de validación:**
+  - Diagnóstico: los dos contenedores estaban saludables y respondían en 18080; la dirección utilizada por el usuario era 5173. Se recreó el frontend con el nuevo puerto mediante `docker compose up -d --build --wait --wait-timeout 180`.
+  - Verificación real en Chromium sobre `http://localhost:5173`: interfaz React visible, navegación al registro y al panel de modelos y retorno a la pantalla de evaluación con dos controles de PDF.
+  - Siete respuestas HTTP 200 de la API, incluida la carga de modelos, snapshots, experimentos, estadísticas, comparaciones y sílabos. Salud 3.2.1 correcta. Sin errores JavaScript ni solicitudes fallidas.
+  - Captura y resultado en `.reports/frontend-docker-5173.png` y `.reports/frontend-docker-5173.json`. No se repitió la suite científica por tratarse de un cambio de puerto y documentación.
+- **Decisiones técnicas adoptadas:** Mantener Nginx en 8080 dentro del contenedor y publicar 5173 en el host; conservar los volúmenes y las rutas `/api` existentes.
+- **Bloqueadores / Riesgos identificados:** Sin bloqueadores. Docker ocupa 5173; una instancia Vite simultánea debe utilizar otro puerto.
+- **Próximas tareas para la siguiente sesión:** Revisar los hallazgos de SonarQube documentados cuando se solicite su corrección.
 

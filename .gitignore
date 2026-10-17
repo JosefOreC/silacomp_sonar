@@ -438,6 +438,10 @@ Temporary Items
 # End of https://www.toptal.com/developers/gitignore/api/python,react,reactnative
 
 # Application runtime data
+.reports/
+.scannerwork/
+frontend/playwright-report/
+frontend/test-results/
 data/uploads/*
 !data/uploads/.gitkeep
 data/reports/*

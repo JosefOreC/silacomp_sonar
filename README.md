@@ -117,7 +117,26 @@ La aplicación web estará disponible en `http://localhost:5173`.
 
 En PowerShell, si la política de scripts impide ejecutar `npm`, use `npm.cmd`.
 
-### C. Almacenamiento independiente
+### C. Docker y SonarQube
+
+El despliegue utiliza `compose.yaml` (API FastAPI y frontend Nginx con volúmenes
+persistentes). `compose.sonarqube.yaml` incorpora SonarQube, PostgreSQL,
+pruebas con cobertura Python y el escáner para backend y frontend.
+Consulte [la guía de Docker y SonarQube](docs/DOCKER_SONARQUBE.md) para preparar
+las variables, levantar los servicios y ejecutar el análisis con Quality Gate.
+El [resultado del despliegue y análisis](docs/RESULTADO_SONARQUBE.md) registra
+la validación ejecutada, las métricas y los hallazgos pendientes de revisión.
+
+Para levantar el proyecto completo en Docker desde la raíz:
+
+```powershell
+docker compose up -d --build --wait
+```
+
+Abra `http://localhost:5173`. Docker publica la web y la API en ese mismo origen;
+el puerto configurado en `.env` es `APP_PORT=5173`.
+
+### D. Almacenamiento independiente
 
 `CONVCOMP_DATA_DIR` cambia el directorio del backend que contiene `convcomp.db`, `uploads/` y `models/` (por defecto `backend/data`). `CONVCOMP_REPORTS_DIR` cambia el directorio de reportes (por defecto `data/reports`, relativo al directorio de ejecución).
 

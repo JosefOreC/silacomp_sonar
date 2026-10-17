@@ -1,0 +1,43 @@
+name: convcomp
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: production
+    restart: unless-stopped
+    init: true
+    environment:
+      CONVCOMP_DATA_DIR: /var/lib/convcomp/data
+      CONVCOMP_REPORTS_DIR: /var/lib/convcomp/reports
+      HF_HOME: /var/cache/convcomp/huggingface
+    volumes:
+      - app_data:/var/lib/convcomp/data
+      - app_reports:/var/lib/convcomp/reports
+      - huggingface_cache:/var/cache/convcomp/huggingface
+    expose:
+      - "8000"
+    security_opt:
+      - no-new-privileges:true
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_URL: /api
+    restart: unless-stopped
+    ports:
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-5173}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  app_data:
+  app_reports:
+  huggingface_cache:
+
