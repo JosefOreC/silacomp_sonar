@@ -25,7 +25,7 @@ router = APIRouter(prefix="/syllabi", tags=["Sílabos"])
 
 
 @router.post("/upload", response_model=SyllabusResponse, status_code=status.HTTP_201_CREATED)
-async def upload_syllabus(
+def upload_syllabus(
     file: UploadFile = File(...),
     university: Optional[str] = Form(None),
     course_name: Optional[str] = Form(None),
@@ -54,7 +54,7 @@ async def upload_syllabus(
     file_path = os.path.join(upload_dir, saved_filename)
 
     try:
-        content_bytes = await file.read()
+        content_bytes = file.file.read()
         if len(content_bytes) == 0:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El archivo subido está vacío (0 bytes).")
 
@@ -91,6 +91,8 @@ async def upload_syllabus(
             ocr_engine_name=syllabus.ocr_engine_name,
         )
 
+    except HTTPException:
+        raise
     except InsufficientDigitalTextError as e:
         if os.path.exists(file_path):
             os.remove(file_path)

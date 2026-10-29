@@ -42,10 +42,9 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, isSelected, onSelect, onAc
   return (
     <div
       id={`model-card-${model.version_id}`}
-      onClick={onSelect}
       style={{
         border: `1px solid ${isSelected ? 'var(--accent)' : model.is_active ? '#22c55e44' : 'var(--border-color)'}`,
-        borderRadius: '0px',
+        borderRadius: 'var(--radius-md)',
         padding: '16px',
         cursor: 'pointer',
         background: isSelected ? 'var(--bg-elevated)' : 'var(--bg-secondary)',
@@ -58,7 +57,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, isSelected, onSelect, onAc
         {model.is_active && (
           <span style={{
             fontSize: '10px', fontWeight: 700, letterSpacing: '0.05em',
-            textTransform: 'uppercase', color: '#22c55e',
+            textTransform: 'uppercase', color: 'var(--match-color)',
             background: '#22c55e18', border: '1px solid #22c55e44',
             padding: '2px 8px',
           }}>
@@ -68,7 +67,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, isSelected, onSelect, onAc
         {isBaseline && (
           <span style={{
             fontSize: '10px', fontWeight: 700, letterSpacing: '0.05em',
-            textTransform: 'uppercase', color: '#94a3b8',
+            textTransform: 'uppercase', color: 'var(--text-muted)',
             background: 'var(--bg-elevated)', border: '1px solid var(--border-color)',
             padding: '2px 8px',
           }}>
@@ -79,7 +78,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, isSelected, onSelect, onAc
           <span style={{
             fontSize: '10px', fontWeight: 700, letterSpacing: '0.05em',
             textTransform: 'uppercase',
-            color: gain >= 0 ? '#4ade80' : '#f87171',
+            color: gain >= 0 ? 'var(--match-color)' : 'var(--nomatch-color)',
             background: gain >= 0 ? '#4ade8018' : '#f8717118',
             border: `1px solid ${gain >= 0 ? '#4ade8044' : '#f8717144'}`,
             padding: '2px 8px',
@@ -90,9 +89,10 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, isSelected, onSelect, onAc
       </div>
 
       {/* Nombre del algoritmo */}
-      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px', fontFamily: 'monospace' }}>
+      <button type="button" onClick={onSelect} aria-pressed={isSelected}
+        style={{ display: 'block', background: 'transparent', border: 0, padding: 0, cursor: 'pointer', textAlign: 'left', fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px', fontFamily: 'monospace' }}>
         {model.algorithm_name}
-      </div>
+      </button>
       <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '10px', fontFamily: 'monospace' }}>
         {model.version_id}
       </div>
@@ -135,7 +135,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, isSelected, onSelect, onAc
               background: 'var(--bg-primary)', padding: '8px', textAlign: 'center',
               border: '1px solid var(--border-color)',
             }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#94a3b8', fontFamily: 'monospace' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-muted)', fontFamily: 'monospace' }}>
                 {value}
               </div>
               <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
@@ -208,7 +208,7 @@ const ConfusionMatrix: React.FC<{ matrix: number[][]; labels: string[] }> = ({ m
                       background: isDiag
                         ? `rgba(74, 222, 128, ${0.1 + intensity * 0.4})`
                         : val > 0 ? `rgba(248, 113, 113, ${0.08 + intensity * 0.25})` : 'transparent',
-                      color: isDiag ? '#4ade80' : val > 0 ? '#f87171' : 'var(--text-muted)',
+                      color: isDiag ? 'var(--match-color)' : val > 0 ? 'var(--nomatch-color)' : 'var(--text-muted)',
                       border: '1px solid var(--border-color)',
                     }}>
                       {val}
@@ -296,7 +296,7 @@ const MetricsPanel: React.FC<{ model: ModelVersion }> = ({ model }) => {
                 { label: 'Ganancia en F₁', value: (bc.f1_gain >= 0 ? '+' : '') + fmtNum(bc.f1_gain), positive: bc.f1_gain >= 0 },
               ].map(({ label, value, positive }) => (
                 <div key={label}>
-                  <div style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'monospace', color: positive !== undefined ? (positive ? '#4ade80' : '#f87171') : 'var(--text-secondary)' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'monospace', color: positive !== undefined ? (positive ? 'var(--match-color)' : 'var(--nomatch-color)') : 'var(--text-secondary)' }}>
                     {value}
                   </div>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
@@ -305,7 +305,7 @@ const MetricsPanel: React.FC<{ model: ModelVersion }> = ({ model }) => {
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 600, color: bc.superior_to_baseline ? '#4ade80' : '#f87171' }}>
+            <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 600, color: bc.superior_to_baseline ? 'var(--match-color)' : 'var(--nomatch-color)' }}>
               {bc.superior_to_baseline
                 ? '✓ El modelo supervisado iguala o mejora el F₁ y la exactitud del baseline en las muestras evaluadas.'
                 : '⚠ El modelo supervisado no ha superado al baseline heurístico. Se recomienda acumular más revisiones o ajustar hiperparámetros.'}
@@ -425,12 +425,12 @@ export const ModelManagementView: React.FC = () => {
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ maxWidth: '1360px', margin: '24px auto', padding: '0 20px' }}>
+    <div className="models-page page-container">
 
       {/* Encabezado */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 4px 0', color: 'var(--text-primary)', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+          <h2 className="page-heading">
             Gestión de Modelos de Aprendizaje Supervisado
           </h2>
           <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -468,12 +468,12 @@ export const ModelManagementView: React.FC = () => {
       </div>
 
       {error && (
-        <div style={{ padding: '12px 16px', background: '#f871710a', border: '1px solid #f8717133', color: '#f87171', fontSize: '13px', marginBottom: '20px' }}>
+        <div style={{ padding: '12px 16px', background: '#f871710a', border: '1px solid #f8717133', color: 'var(--nomatch-color)', fontSize: '13px', marginBottom: '20px' }}>
           {error}
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '20px', alignItems: 'start' }}>
+      <div className="model-layout">
 
         {/* Panel izquierdo: lista de modelos + panel de entrenamiento */}
         <div style={{ display: 'grid', gap: '16px' }}>
@@ -486,7 +486,7 @@ export const ModelManagementView: React.FC = () => {
 
             {/* Algoritmo */}
             <div style={{ marginBottom: '12px' }}>
-              <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px' }}>
+              <label htmlFor="train-algorithm-select" style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px' }}>
                 Algoritmo
               </label>
               <select
@@ -496,7 +496,7 @@ export const ModelManagementView: React.FC = () => {
                 style={{
                   width: '100%', padding: '8px 10px', fontSize: '12px',
                   background: 'var(--bg-primary)', border: '1px solid var(--border-color)',
-                  color: 'var(--text-primary)', borderRadius: '0px', fontFamily: 'monospace',
+                  color: 'var(--text-primary)', borderRadius: 'var(--radius-md)', fontFamily: 'monospace',
                 }}
               >
                 <option value="calibrated_logistic">Regresión Logística Calibrada (Platt Scaling)</option>
@@ -506,14 +506,14 @@ export const ModelManagementView: React.FC = () => {
 
             {/* Tamaño de prueba */}
             <div style={{ marginBottom: '12px' }}>
-              <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px' }}>
+              <label htmlFor="train-test-size-slider" style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px' }}>
                 Partición de Evaluación: {Math.round(trainForm.test_size * 100)}%
               </label>
               <input
                 id="train-test-size-slider"
                 type="range" min="0.1" max="0.4" step="0.05"
                 value={trainForm.test_size}
-                onChange={(e) => setTrainForm((f) => ({ ...f, test_size: parseFloat(e.target.value) }))}
+                onChange={(e) => setTrainForm((f) => ({ ...f, test_size: Number.parseFloat(e.target.value) }))}
                 style={{ width: '100%', accentColor: 'var(--accent)' }}
               />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -549,7 +549,7 @@ export const ModelManagementView: React.FC = () => {
             </div>
 
             {trainError && (
-              <div style={{ padding: '8px 12px', background: '#f871710a', border: '1px solid #f8717133', color: '#f87171', fontSize: '12px', marginBottom: '12px' }}>
+              <div style={{ padding: '8px 12px', background: '#f871710a', border: '1px solid #f8717133', color: 'var(--nomatch-color)', fontSize: '12px', marginBottom: '12px' }}>
                 {trainError}
               </div>
             )}
@@ -599,7 +599,7 @@ export const ModelManagementView: React.FC = () => {
         {/* Panel derecho: métricas detalladas */}
         <div>
           {selectedModel ? (
-            <div style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', padding: '20px' }}>
+            <div className="model-panel">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
                 <div>
                   <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
@@ -611,7 +611,7 @@ export const ModelManagementView: React.FC = () => {
                 </div>
                 {selectedModel.is_active && (
                   <span style={{
-                    fontSize: '11px', fontWeight: 700, color: '#22c55e',
+                    fontSize: '11px', fontWeight: 700, color: 'var(--match-color)',
                     background: '#22c55e18', border: '1px solid #22c55e44',
                     padding: '4px 12px', letterSpacing: '0.04em', textTransform: 'uppercase',
                   }}>

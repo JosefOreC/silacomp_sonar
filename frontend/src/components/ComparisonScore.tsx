@@ -23,7 +23,7 @@ export const ComparisonScore: React.FC<ComparisonScoreProps> = ({
   const getScoreColor = (pct: number) => {
     if (pct >= 85) return 'var(--accent-success)';
     if (pct >= 70) return 'var(--accent-warning)';
-    if (pct >= 50) return '#94a3b8';
+    if (pct >= 50) return 'var(--text-muted)';
     return 'var(--accent-danger)';
   };
 
@@ -37,7 +37,7 @@ export const ComparisonScore: React.FC<ComparisonScoreProps> = ({
   const dossierNumber = `EXP-${comparison.id.slice(0, 8).toUpperCase()}`;
 
   return (
-    <div className="card" style={{ marginBottom: '24px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '0px' }}>
+    <div className="card" style={{ marginBottom: '24px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
       {/* Encabezado Formal de Reporte Técnico */}
       <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
@@ -97,11 +97,11 @@ export const ComparisonScore: React.FC<ComparisonScoreProps> = ({
         <div style={{
           marginTop: '16px',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
           gap: '12px',
           background: 'var(--bg-primary)',
           padding: '12px 16px',
-          borderRadius: '0px',
+          borderRadius: 'var(--radius-md)',
           border: '1px solid var(--border-color)'
         }}>
           <div>
@@ -126,7 +126,7 @@ export const ComparisonScore: React.FC<ComparisonScoreProps> = ({
       {/* Grid de Indicadores Oficiales */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
         {/* Score Global */}
-        <div style={{ background: 'var(--bg-primary)', padding: '16px', borderRadius: '0px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
+        <div style={{ background: 'var(--bg-primary)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', textAlign: 'center' }}>
           <div style={{ fontSize: '36px', fontWeight: 800, color: getScoreColor(globalPct), lineHeight: 1 }}>
             {globalPct}%
           </div>
@@ -139,11 +139,11 @@ export const ComparisonScore: React.FC<ComparisonScoreProps> = ({
         </div>
 
         {/* Indicador 1: Cumplimiento de la Exigencia del Plan Destino */}
-        <div style={{ background: 'var(--bg-primary)', padding: '16px', borderRadius: '0px', border: '1px solid #4b5563', textAlign: 'center' }}>
+        <div style={{ background: 'var(--bg-primary)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', textAlign: 'center' }}>
           <div style={{ fontSize: '36px', fontWeight: 800, color: getScoreColor(objCovPct), lineHeight: 1 }}>
             {objCovPct}%
           </div>
-          <div style={{ fontSize: '12px', textTransform: 'uppercase', color: '#e5e7eb', fontWeight: 700, marginTop: '8px', letterSpacing: '0.03em' }}>
+          <div style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-primary)', fontWeight: 700, marginTop: '8px', letterSpacing: '0.03em' }}>
             Exigencia Curricular Acreditada
           </div>
           <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.4 }}>
@@ -152,11 +152,11 @@ export const ComparisonScore: React.FC<ComparisonScoreProps> = ({
         </div>
 
         {/* Indicador 2: Aprovechamiento del Curso de Procedencia */}
-        <div style={{ background: 'var(--bg-primary)', padding: '16px', borderRadius: '0px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
+        <div style={{ background: 'var(--bg-primary)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', textAlign: 'center' }}>
           <div style={{ fontSize: '36px', fontWeight: 800, color: getScoreColor(cmpCovPct), lineHeight: 1 }}>
             {cmpCovPct}%
           </div>
-          <div style={{ fontSize: '12px', textTransform: 'uppercase', color: '#e5e7eb', fontWeight: 700, marginTop: '8px', letterSpacing: '0.03em' }}>
+          <div style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-primary)', fontWeight: 700, marginTop: '8px', letterSpacing: '0.03em' }}>
             Aprovechamiento Curricular de Origen
           </div>
           <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.4 }}>
@@ -165,7 +165,7 @@ export const ComparisonScore: React.FC<ComparisonScoreProps> = ({
         </div>
 
         {/* Distribución Categorial */}
-        <div style={{ background: 'var(--bg-primary)', padding: '14px', borderRadius: '0px', border: '1px solid var(--border-color)' }}>
+        <div style={{ background: 'var(--bg-primary)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
           <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px', letterSpacing: '0.03em' }}>
             Distribución de Equivalencias
           </div>

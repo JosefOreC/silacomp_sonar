@@ -2,7 +2,12 @@
 
 Sistema de análisis computacional de correspondencia temática entre sílabos universitarios basado en Arquitectura Limpia (Clean Architecture), procesamiento de lenguaje natural (NLP) híbrido auditable y supervisión humana con inmutabilidad de predicciones.
 
-Versión de aplicación: **3.2.1**. Incluye comparación explicable (1.0), visor doble con evidencias (1.5), OCR y aprendizaje supervisado (2.0), consolidación de evaluación por grupos académicos (2.1), ground truth y acuerdo interevaluador (3.0), cola de revisión con lotes de aprendizaje activo (3.1) y experimentos reproducibles sobre comparaciones completas reservadas (3.2). El alcance de desarrollo planificado de Fase 3 está implementado; la validación con anotaciones institucionales reales sigue pendiente. El avance se registra en [docs/TASKS.md](docs/TASKS.md).
+Versión de aplicación: **3.3.0**. Incluye comparación explicable (1.0), visor doble con evidencias (1.5), OCR y aprendizaje supervisado (2.0), consolidación de evaluación por grupos académicos (2.1), ground truth y acuerdo interevaluador (3.0), cola de revisión con lotes de aprendizaje activo (3.1), experimentos reproducibles sobre comparaciones completas reservadas (3.2) y comparación de un objetivo con hasta cinco candidatos (3.3). El alcance de desarrollo planificado de Fase 3 está implementado; la validación con anotaciones institucionales reales sigue pendiente. El avance se registra en [docs/TASKS.md](docs/TASKS.md).
+
+La vista **Por lotes** ordena candidatos por cobertura del objetivo y afinidad,
+conserva resultados parciales e historial y permite abrir cada análisis y PDF
+o exportar el resumen JSON. Cada comparación es independiente; las coberturas
+de varios cursos no se suman. Consulte [el uso, límites y contrato de lotes](docs/COMPARACION_POR_LOTES.md).
 
 ---
 
@@ -24,7 +29,7 @@ conv_comp/
 │   │   ├── infrastructure/       # PyMuPDF, Normalizador, TF-IDF + SentenceTransformers, SQLite, ReportLab
 │   │   └── api/                  # FastAPI routers, esquemas Pydantic y CORS
 │   └── requirements.txt
-├── frontend/                     # React + TypeScript + Vite + Dark Academic Design System
+├── frontend/                     # React + TypeScript + Vite + interfaz SaaS violeta adaptable
 │   ├── src/
 │   │   ├── components/           # Header, SyllabusUploader, ComparisonScore, MatchTable, EvidencePanel, UnmatchedPanel, ReviewModal, AuditDatasetView, Dashboard
 │   │   ├── services/api.ts       # Cliente API REST tipado
@@ -140,11 +145,19 @@ el puerto configurado en `.env` es `APP_PORT=5173`.
 
 `CONVCOMP_DATA_DIR` cambia el directorio del backend que contiene `convcomp.db`, `uploads/` y `models/` (por defecto `backend/data`). `CONVCOMP_REPORTS_DIR` cambia el directorio de reportes (por defecto `data/reports`, relativo al directorio de ejecución).
 
-`GET /api/health` devuelve versión `3.2.1` y fase `3`; OpenAPI informa la misma versión. El protocolo de experimentos se describe en [docs/EXPERIMENTOS_FASE_3.md](docs/EXPERIMENTOS_FASE_3.md). Las pruebas integradas de Chromium se ejecutan desde `frontend` con `npm.cmd run test:browser`; consulte [docs/VALIDACION_NAVEGADOR.md](docs/VALIDACION_NAVEGADOR.md).
+`GET /api/health` devuelve versión `3.3.0` y fase `3`; OpenAPI informa la misma versión. El protocolo de experimentos se describe en [docs/EXPERIMENTOS_FASE_3.md](docs/EXPERIMENTOS_FASE_3.md). Las pruebas integradas de Chromium se ejecutan desde `frontend` con `npm.cmd run test:browser`; consulte [docs/VALIDACION_NAVEGADOR.md](docs/VALIDACION_NAVEGADOR.md).
 
 ---
 
 ## 🧪 5. Ejecución de la Suite de Pruebas
+
+La preparación de la entrega académica, los reportes de cobertura y la
+verificación de los seis criterios del manual se describen en
+[docs/EVALUACION_CALIDAD.md](docs/EVALUACION_CALIDAD.md).
+El [plan de la sesión 29](docs/PLAN_SESION_29.md) detalla las mejoras de
+integración, las protecciones de cobertura y sus criterios de aceptación.
+El [rediseño web](docs/DISENO_WEB.md) documenta la referencia visual, la paleta
+violeta y las comprobaciones de escritorio, móvil y accesibilidad de la guía.
 
 Para ejecutar la suite de pruebas unitarias, integración y end-to-end:
 

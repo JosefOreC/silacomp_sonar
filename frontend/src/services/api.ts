@@ -3,6 +3,8 @@
  */
 
 import type {
+  ComparisonBatch,
+  ComparisonBatchRequest,
   Comparison,
   ComparisonSummary,
   ComparisonEvidenceCatalog,
@@ -27,27 +29,39 @@ import type {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
-async function annotationRequest<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}/active-learning/${path}`, options);
+async function jsonRequest<T>(path: string, fallback: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}/${path}`, options);
   if (!res.ok) {
     const body: unknown = await res.json().catch(() => null);
     const detail = body && typeof body === 'object' && 'detail' in body ? body.detail : null;
-    throw new Error(typeof detail === 'string' ? detail : 'No se pudo consultar o guardar el lote de anotación');
+    throw new Error(typeof detail === 'string' ? detail : fallback);
   }
   return res.json();
 }
 
-async function evaluationRequest<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}/evaluation/${path}`, options);
-  if (!res.ok) {
-    const body: unknown = await res.json().catch(() => null);
-    const detail = body && typeof body === 'object' && 'detail' in body ? body.detail : null;
-    throw new Error(typeof detail === 'string' ? detail : 'No se pudo completar la evaluación científica');
-  }
-  return res.json();
+function annotationRequest<T>(path: string, options?: RequestInit): Promise<T> {
+  return jsonRequest(`active-learning/${path}`, 'No se pudo consultar o guardar el lote de anotación', options);
+}
+
+function evaluationRequest<T>(path: string, options?: RequestInit): Promise<T> {
+  return jsonRequest(`evaluation/${path}`, 'No se pudo completar la evaluación científica', options);
 }
 
 export const api = {
+  listComparisonBatches(): Promise<ComparisonBatch[]> {
+    return jsonRequest('comparison-batches', 'No se pudieron consultar los lotes de comparación');
+  },
+  createComparisonBatch(request: ComparisonBatchRequest): Promise<ComparisonBatch> {
+    return jsonRequest('comparison-batches', 'No se pudo ejecutar el lote de comparación', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request),
+    });
+  },
+  getComparisonBatch(id: string): Promise<ComparisonBatch> {
+    return jsonRequest(`comparison-batches/${encodeURIComponent(id)}`, 'No se pudo recuperar el lote de comparación');
+  },
+  getComparisonBatchExportUrl(id: string): string {
+    return `${API_BASE_URL}/comparison-batches/${encodeURIComponent(id)}/export`;
+  },
   listEvaluationSnapshots(): Promise<EvaluationSnapshot[]> {
     return evaluationRequest('snapshots');
   },

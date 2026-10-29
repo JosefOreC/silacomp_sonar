@@ -71,7 +71,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
       <div style={{
         background: 'var(--bg-secondary)',
         border: '1px solid #4b5563',
-        borderRadius: '0px',
+        borderRadius: 'var(--radius-md)',
         maxWidth: '560px',
         width: '100%',
         boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
@@ -93,7 +93,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         </div>
 
         {/* Resumen Inmutable */}
-        <div style={{ background: 'var(--bg-primary)', padding: '12px', borderRadius: '0px', border: '1px solid var(--border-color)', marginBottom: '16px', fontSize: '12px' }}>
+        <div style={{ background: 'var(--bg-primary)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', marginBottom: '16px', fontSize: '12px' }}>
           <div style={{ marginBottom: '4px' }}>
             <strong>Contenido Requerido:</strong> {match.objective_title} · Página {match.objective_page}
           </div>
@@ -109,10 +109,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 600 }}>
+              <label htmlFor="reviewmodal-field-1" style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 600 }}>
                 Dictamen Final *
               </label>
-              <select
+              <select id="reviewmodal-field-1"
                 value={decision}
                 onChange={(e) => setDecision(e.target.value as MatchClassification)}
                 style={{
@@ -121,7 +121,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                   border: '1px solid #CBD5E1',
                   color: '#000000',
                   padding: '8px',
-                  borderRadius: '0px',
+                  borderRadius: 'var(--radius-md)',
                   fontSize: '12px',
                   fontWeight: 600,
                   cursor: 'pointer'
@@ -136,10 +136,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 600 }}>
+              <label htmlFor="reviewmodal-field-2" style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 600 }}>
                 Criterio Evaluativo *
               </label>
-              <select
+              <select id="reviewmodal-field-2"
                 value={correctionType}
                 onChange={(e) => setCorrectionType(e.target.value as CorrectionType)}
                 style={{
@@ -148,7 +148,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                   border: '1px solid #CBD5E1',
                   color: '#000000',
                   padding: '8px',
-                  borderRadius: '0px',
+                  borderRadius: 'var(--radius-md)',
                   fontSize: '12px',
                   fontWeight: 600,
                   cursor: 'pointer'
@@ -164,10 +164,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 600 }}>
+            <label htmlFor="reviewmodal-field-3" style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 600 }}>
               Identificación del Docente o Comisión Evaluadora
             </label>
-            <input
+            <input id="reviewmodal-field-3"
               type="text"
               value={reviewerId}
               onChange={(e) => setReviewerId(e.target.value)}
@@ -178,7 +178,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                 border: '1px solid #CBD5E1',
                 color: '#000000',
                 padding: '8px 10px',
-                borderRadius: '0px',
+                borderRadius: 'var(--radius-md)',
                 fontSize: '12px',
                 boxSizing: 'border-box'
               }}
@@ -186,10 +186,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 600 }}>
+            <label htmlFor="reviewmodal-field-4" style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 600 }}>
               Fundamentación Académica del Dictamen *
             </label>
-            <textarea
+            <textarea id="reviewmodal-field-4"
               rows={3}
               value={justification}
               onChange={(e) => setJustification(e.target.value)}
@@ -200,7 +200,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                 border: '1px solid #CBD5E1',
                 color: '#000000',
                 padding: '8px 10px',
-                borderRadius: '0px',
+                borderRadius: 'var(--radius-md)',
                 fontSize: '12px',
                 boxSizing: 'border-box',
                 resize: 'vertical'
@@ -212,7 +212,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
           </div>
 
           {errorMsg && (
-            <div style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.1)', borderLeft: '3px solid #ef4444', borderRadius: '0px', fontSize: '12px', color: '#fca5a5' }}>
+            <div style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.1)', borderLeft: '3px solid #ef4444', borderRadius: 'var(--radius-md)', fontSize: '12px', color: 'var(--nomatch-color)' }}>
               {errorMsg}
             </div>
           )}

@@ -149,7 +149,8 @@ class SpatialLocatorService:
                 clean_title = clean_title.split(" - ", 1)[1].strip()
             clean_title = re.sub(r"^(?:unidad\s+[ivx\d]+|tema\s*\d+|semana\s*\d+)\s*[:\-\.]?\s*", "", clean_title, flags=re.I).strip()
             clean_title = re.sub(r"^(?:[•●○■▪\*\-–—]|\d+[\.\)])\s*", "", clean_title).strip()
-            clean_title = re.sub(r"\.{3,}$", "", clean_title).strip()
+            if clean_title.endswith("..."):
+                clean_title = clean_title.rstrip(".").strip()
 
             is_synthetic_title = bool(re.search(r"^(?:sumilla|fundamentaci[oó]n|datos?\s+generales?|competencias?|resultados?\s+de\s+aprendizaje)\b", clean_title, re.I))
             if is_synthetic_title:

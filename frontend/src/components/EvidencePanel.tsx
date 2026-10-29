@@ -33,15 +33,15 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
           </span>
           <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{pct}%</span>
         </div>
-        <div style={{ width: '100%', height: '5px', background: 'var(--bg-primary)', borderRadius: '0px', overflow: 'hidden' }}>
-          <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '0px' }} />
+        <div style={{ width: '100%', height: '5px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+          <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 'var(--radius-md)' }} />
         </div>
       </div>
     );
   };
 
   return (
-    <div className="card" style={{ border: '1px solid #4b5563', background: 'var(--bg-secondary)', marginTop: '20px', borderRadius: '0px' }}>
+    <div className="card" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', marginTop: '20px', borderRadius: 'var(--radius-md)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '14px', marginBottom: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -66,7 +66,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
           <button
             onClick={() => onOpenPdfViewer?.(match)}
             className="btn btn-secondary"
-            style={{ fontSize: '12px', padding: '6px 14px', border: '1px solid #10b981', color: '#10b981', fontWeight: 600 }}
+            style={{ fontSize: '12px', padding: '6px 14px', border: '1px solid var(--match-border)', color: 'var(--match-color)', fontWeight: 600 }}
             title="Abrir ambos sílabos en el Visor Pericial Doble PDF con resaltado espacial (Fase 1.5)"
           >
             Ver en Visor PDF
@@ -89,14 +89,14 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       </div>
 
       {/* Grid Comparativo Lado a Lado con Citas Textuales y Páginas */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: '16px', marginBottom: '20px' }}>
         {/* Lado Objetivo */}
-        <div style={{ background: 'var(--bg-primary)', padding: '14px', borderRadius: '0px', border: '1px solid var(--border-color)' }}>
+        <div style={{ background: 'var(--bg-primary)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.03em' }}>
               CONTENIDO DEL PLAN DESTINO
             </span>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: '0px', border: '1px solid var(--border-color)' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
               Página {match.objective_page}
             </span>
           </div>
@@ -111,7 +111,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             color: 'var(--text-main)',
             background: 'var(--bg-secondary)',
             padding: '10px 12px',
-            borderRadius: '0px',
+            borderRadius: 'var(--radius-md)',
             borderLeft: '3px solid #6b7280',
             lineHeight: 1.5
           }}>
@@ -120,12 +120,12 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         </div>
 
         {/* Lado Comparado */}
-        <div style={{ background: 'var(--bg-primary)', padding: '14px', borderRadius: '0px', border: '1px solid var(--border-color)' }}>
+        <div style={{ background: 'var(--bg-primary)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.03em' }}>
               CONTENIDO DE LA INSTITUCIÓN DE ORIGEN
             </span>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: '0px', border: '1px solid var(--border-color)' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
               Página {match.compared_page}
             </span>
           </div>
@@ -140,7 +140,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             color: 'var(--text-main)',
             background: 'var(--bg-secondary)',
             padding: '10px 12px',
-            borderRadius: '0px',
+            borderRadius: 'var(--radius-md)',
             borderLeft: '3px solid #9ca3af',
             lineHeight: 1.5
           }}>
@@ -150,14 +150,14 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       </div>
 
       {/* Desglose de Criterios y Términos Clave */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '16px' }}>
         {/* Barras de Puntuación */}
-        <div style={{ background: 'var(--bg-primary)', padding: '14px', borderRadius: '0px', border: '1px solid var(--border-color)' }}>
+        <div style={{ background: 'var(--bg-primary)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
           <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Criterios de Evaluación Multivariada
           </div>
           {renderProgressBar('Similitud Conceptual y Semántica', score_breakdown.semantic_similarity, 0.40, '#cbd5e1')}
-          {renderProgressBar('Concordancia Textual y Léxica', score_breakdown.lexical_similarity, 0.30, '#10b981')}
+          {renderProgressBar('Concordancia Textual y Léxica', score_breakdown.lexical_similarity, 0.30, 'var(--match-color)')}
           {renderProgressBar('Coincidencia de Vocabulario Especializado', score_breakdown.keyword_overlap, 0.15, '#f59e0b')}
           {renderProgressBar('Correspondencia Estructural del Programa', score_breakdown.structural_similarity, 0.15, '#c084fc')}
 
@@ -172,7 +172,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         </div>
 
         {/* Términos Especializados Coincidentes */}
-        <div style={{ background: 'var(--bg-primary)', padding: '14px', borderRadius: '0px', border: '1px solid var(--border-color)' }}>
+        <div style={{ background: 'var(--bg-primary)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
           <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Términos Especializados Coincidentes · {evidence.shared_keywords.length}
           </div>
@@ -186,7 +186,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     border: '1px solid var(--border-color)',
                     color: 'var(--text-primary)',
                     padding: '3px 8px',
-                    borderRadius: '0px',
+                    borderRadius: 'var(--radius-md)',
                     fontSize: '11px'
                   }}
                 >

@@ -438,7 +438,9 @@ Temporary Items
 # End of https://www.toptal.com/developers/gitignore/api/python,react,reactnative
 
 # Application runtime data
-.reports/
+.reports/*
+!.reports/coverage.xml
+!.reports/pytest.xml
 .scannerwork/
 frontend/playwright-report/
 frontend/test-results/
@@ -448,3 +450,9 @@ data/reports/*
 !data/reports/.gitkeep
 *.db
 backend/data/*.db
+
+# Informes reales requeridos por el pipeline académico (que no ejecuta pruebas).
+!frontend/coverage/
+frontend/coverage/*
+!frontend/coverage/lcov.info
+.cache/

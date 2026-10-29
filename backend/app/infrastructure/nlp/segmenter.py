@@ -422,7 +422,7 @@ class SyllabusSegmenter(ISegmentationService):
             if match:
                 matched_topic = match.group(1).strip()
                 # Si el topic capturado es solo números o conjunciones (falso tema como "y 2"), ignorar
-                if re.match(r"^(?:y|,|\-|al|\d+)\s*\d*$", matched_topic, re.IGNORECASE):
+                if re.match(r"^(?:y|,|\-|al|\d++)\s*+\d*$", matched_topic, re.IGNORECASE):
                     continue
 
                 if has_started_topics and (current_buffer or current_title):

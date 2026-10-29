@@ -28,10 +28,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, []);
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '30px auto', padding: '0 20px' }}>
+    <div className="dashboard-page page-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 4px 0', color: 'var(--text-primary)', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+          <h2 className="page-heading">
             Registro de Expedientes y Catálogo Curricular
           </h2>
           <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -67,7 +67,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           Cargando registros...
         </div>
       ) : activeSubTab === 'comparisons' ? (
-        <div className="card" style={{ background: 'var(--bg-secondary)', overflowX: 'auto', borderRadius: '0px' }}>
+        <div className="card" style={{ background: 'var(--bg-secondary)', overflowX: 'auto', borderRadius: 'var(--radius-md)' }}>
           {comparisons.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
               No se registran evaluaciones previas. Seleccione "Nueva Evaluación Curricular" para iniciar un expediente.
@@ -106,7 +106,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <span style={{
                           fontWeight: 800,
                           fontSize: '14px',
-                          color: scorePct >= 85 ? 'var(--accent-success)' : scorePct >= 70 ? 'var(--accent-warning)' : '#94a3b8'
+                          color: scorePct >= 85 ? 'var(--accent-success)' : scorePct >= 70 ? 'var(--accent-warning)' : 'var(--text-muted)'
                         }}>
                           {scorePct}%
                         </span>
@@ -135,7 +135,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           )}
         </div>
       ) : (
-        <div className="card" style={{ background: 'var(--bg-secondary)', overflowX: 'auto', borderRadius: '0px' }}>
+        <div className="card" style={{ background: 'var(--bg-secondary)', overflowX: 'auto', borderRadius: 'var(--radius-md)' }}>
           {syllabi.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
               No hay documentos archivados en el catálogo.

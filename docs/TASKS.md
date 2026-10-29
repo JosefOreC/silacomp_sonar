@@ -1,9 +1,9 @@
 # Registro de Tareas y Avances de Implementación (TASKS)
 ## Sistema Inteligente para Comparación de Sílabos Universitarios — Fases 1.0 a 3.0
 
-**Versión:** 3.2
+**Versión:** 3.5
 
-**Última actualización:** 2026-10-15
+**Última actualización:** 2026-10-29
 **Documento de referencia:** [PLANTEAMIENTO_IMPLEMENTACION_COMPARACION_SILABOS.md](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/docs/PLANTEAMIENTO_IMPLEMENTACION_COMPARACION_SILABOS.md) | [FLUJO_FASE_1.md](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/docs/FLUJO_FASE_1.md)  
 **Normas de actualización:** Ver [REGLAS_IMPLEMENTACION.md](file:///d:/DESARROLLO_APLICACIONES/Python/conv_comp/docs/REGLAS_IMPLEMENTACION.md)
 
@@ -60,8 +60,61 @@
 | **TOTAL CON VALIDACIÓN INTEGRADA** | **Completado** | **100%** | **107** | **107** |
 | 30. Docker y análisis SonarQube | Completado | 100% | 4 | 4 |
 | **TOTAL CON DESPLIEGUE Y CALIDAD** | **Completado** | **100%** | **111** | **111** |
+| 31. Cumplimiento del manual de evaluación de calidad | Completado localmente | 100% | 4 | 4 |
+| **TOTAL CON EVALUACIÓN ACADÉMICA LOCAL** | **Completado** | **100%** | **115** | **115** |
+| 32. Integración y protección de calidad continua | Completado localmente | 100% | 8 | 8 |
+| **TOTAL CON SESIÓN 29** | **Completado localmente** | **100%** | **123** | **123** |
+| 33. Rediseño web SaaS de ConvComp | Completado localmente | 100% | 4 | 4 |
+| **TOTAL CON REDISEÑO WEB** | **Completado localmente** | **100%** | **127** | **127** |
+| 34. Comparaciones por lotes y ranking de candidatos | Completado localmente | 100% | 5 | 5 |
+| **TOTAL CON COMPARACIÓN POR LOTES** | **Completado localmente** | **100%** | **132** | **132** |
 
 ---
+
+### Paquete 31: Cumplimiento del manual de evaluación de calidad
+
+- [x] **TASK-31.1:** Auditar rúbrica, preparar pipeline oficial y metadatos académicos, eliminar exclusiones incompatibles y permitir versionar cobertura real. *(Validado localmente el 2026-10-17)*
+- [x] **TASK-31.2:** Corregir hallazgos de fiabilidad y mantenibilidad preservando contratos de API y reglas del dominio. *(0 incidencias abiertas, 2026-10-17)*
+- [x] **TASK-31.3:** Generar cobertura backend/frontend con pruebas de comportamiento y verificar cobertura global mínima de 80%. *(82,4% global; 113 pruebas Python, 100 Vitest y 4 Playwright aprobadas)*
+- [x] **TASK-31.4:** Repetir análisis real con condiciones efectivas, documentar puntuación por criterio y pendientes de entrega oficial. *(Gate PASSED; rúbrica local 20/20, pendiente pipeline institucional)*
+
+### Paquete 32: Integración y protección de calidad continua
+
+Plan: [PLAN_SESION_29.md](PLAN_SESION_29.md). Objetivos confirmados: continuar
+implementación y sostener la máxima puntuación de SonarQube.
+
+- [x] **TASK-32.1:** Auditar documentos y evidencia histórica; registrar alcance y criterios de la sesión. *(2026-10-28)*
+- [x] **TASK-32.2:** Endurecer verificación de condiciones efectivas, umbrales y cero incidencias abiertas, con regresiones automatizadas. *(34 pruebas de rúbrica/verificador aprobadas, 2026-10-28)*
+- [x] **TASK-32.3:** Añadir pruebas del visor doble: navegación de ambos PDF, cierre y revisión inmutable. *(6 pruebas aprobadas, 2026-10-28)*
+- [x] **TASK-32.4:** Probar integración de la aplicación y corregir fallos reproducibles de navegación y revisión. *(La revisión del visor actualiza el dictamen humano en resultados; 4 pruebas de aplicación y 6 del ciclo de modelos aprobadas, 2026-10-28)*
+- [x] **TASK-32.5:** Establecer protección de cobertura frontend y regenerar LCOV sin exclusiones de fuentes. *(116 pruebas aprobadas; 86,57% líneas, 73,65% ramas; mínimos 80/70, 2026-10-28)*
+- [x] **TASK-32.6:** Ejecutar validaciones completas y repetir análisis SonarQube sobre el estado final. *(137 Python, 116 Vitest y 4 navegador aprobadas; gate PASSED, rúbrica local 20/20, cobertura global 85,0%, 2026-10-28)*
+- [x] **TASK-32.7:** Actualizar evidencias, bitácora y preparación de entrega institucional, distinguiendo resultados locales y oficiales. *(Reportes regenerados; entrega GitLab/Quantum pendiente de destino y acceso, 2026-10-28)*
+- [x] **TASK-32.8:** Restaurar los componentes de virtualización necesarios para Docker Desktop y verificar su funcionamiento antes de continuar la implementación. *(2026-10-28: tras la intervención y el reinicio, servidor Docker 29.7.2 operativo; PostgreSQL y SonarQube saludables.)*
+
+### Paquete 33: Rediseño web SaaS de ConvComp
+
+Referencia solicitada: [Dribbble — AI Search Analytics Platform](https://dribbble.com/shots/27822756-SaaS-Landing-Page-AI-Search-Analytics-Platform).
+La referencia directa son las dos capturas SaaS y la paleta violeta adjuntas
+por el usuario. Decisiones de diseño: [DISENO_WEB.md](DISENO_WEB.md).
+
+- [x] **TASK-33.1:** Adaptar identidad visual, tipografía, navegación y estilos compartidos a la referencia proporcionada. *(Violeta, lavanda y paneles blancos, 2026-10-28)*
+- [x] **TASK-33.2:** Rediseñar el inicio y la carga de ambos sílabos manteniendo los contratos y flujos existentes. *(Panel compartido; metadatos independientes y reintentos probados, 2026-10-28)*
+- [x] **TASK-33.3:** Validar presentación adaptable y flujos en escritorio/móvil; corregir problemas observados. *(6 pruebas de navegador aprobadas en 42,7 s; capturas inspeccionadas; teclado/foco en la guía, 2026-10-28)*
+- [x] **TASK-33.4:** Regenerar cobertura, repetir SonarQube y actualizar evidencias y bitácora del rediseño. *(120 Vitest y 6 navegador aprobadas; gate PASSED, A/A/A, 85,6% global, duplicación 0,8%, cero hallazgos y rúbrica local 20/20; Docker saludable, 2026-10-28)*
+
+### Paquete 34: Comparaciones por lotes y ranking de candidatos
+
+El usuario priorizó ampliar las funciones de comparación. Alcance: un sílabo
+objetivo frente a hasta cinco candidatos, resultados individuales persistentes,
+ranking explicable y recuperación del lote. Usuarios/autenticación y la
+migración de base de datos quedan fuera de este incremento.
+
+- [x] **TASK-34.1:** Definir dominio, contratos y límites del lote, sin agregación curricular ficticia ni cambios al algoritmo de pares. *(Dominio puro; 1–5 candidatos y 20 000 pares como máximo)*
+- [x] **TASK-34.2:** Persistir solicitudes y resultados del lote con idempotencia y conservación de avances parciales. *(SQLite aditivo, UUID único y pruebas de interrupción/relectura)*
+- [x] **TASK-34.3:** Implementar orquestación y API con modelo fijo por lote, ranking y errores por candidato. *(35 pruebas nuevas de dominio/API aprobadas; contratos REST existentes preservados)*
+- [x] **TASK-34.4:** Integrar selección, resultados, historial y acceso a informes en la interfaz violeta. *(Selección y recuperación UI/Chrome verificadas; versión 3.3.0 publicada localmente)*
+- [x] **TASK-34.5:** Verificar dominio/API/UI/navegador, regenerar cobertura, publicar localmente, repetir SonarQube y cerrar evidencias. *(172 Python, 134 Vitest y 8 Chrome aprobadas; gate PASSED, 20/20 local, 2026-10-29)*
 
 ## Desglose Granular de Tareas — Fase 1
 
@@ -993,3 +1046,130 @@ La Fase 4 (usuarios, PostgreSQL y gestión documental) permanece fuera del alcan
 - **Bloqueadores / Riesgos identificados:** Sin bloqueadores. Docker ocupa 5173; una instancia Vite simultánea debe utilizar otro puerto.
 - **Próximas tareas para la siguiente sesión:** Revisar los hallazgos de SonarQube documentados cuando se solicite su corrección.
 
+### Sesión 28 — 2026-10-17
+- **Objetivos de la sesión:** Adecuar la Fase 3 al 100% de la rúbrica del manual de evaluación de calidad proporcionado por el usuario.
+- **Tareas completadas:**
+  - `TASK-31.1`: lectura del manual, normalización del curso y estructura de metadatos académicos, inclusión del pipeline oficial, eliminación de exclusiones de carpetas y excepciones Git para reportes reales de cobertura.
+  - `TASK-31.2`: corrección de los 47 hallazgos históricos. Endpoint de PDF en grupo de hilos, respuesta 400 para PDF vacío, campos obligatorios anulables con `Tipo | None`, promesa de render gestionada, botones y etiquetas accesibles y limpieza de expresiones regulares.
+  - `TASK-31.3`: Vitest con cobertura V8 de todo el frontend, pruebas de comportamiento HTTP/UI, normalización de rutas LCOV y verificación estricta de tipos. XML Python/JUnit y LCOV importados por SonarQube.
+  - `TASK-31.4`: gate local con condiciones globales, verificador reproducible de la rúbrica, análisis final y documentación de métricas y entrega institucional.
+- **Resultados de validación:**
+  - **113 pruebas Python aprobadas** en Docker en **43,86 s**, dos advertencias de deprecación. Coverage.py: **90,22%** de líneas, **72,95%** de ramas y **86,87%** combinado.
+  - **100 pruebas Vitest aprobadas**; frontend completo con **77,01%** de líneas y **65,10%** de ramas. **4 pruebas Playwright aprobadas** en Chromium en **14,2 s**.
+  - Compilación, tipado estricto de aplicación/pruebas, lint y `git diff --check` correctos. Auditoría npm sin vulnerabilidades tras corregir `source-map-js`.
+  - SonarQube: **Quality Gate PASSED**, **20/20 estimado según el manual**, **82,4%** de cobertura global, **1,1%** de duplicación, A/A/A y **0 bugs, vulnerabilidades, code smells y hotspots**. Once condiciones efectivamente evaluadas y aprobadas, incluidas las globales.
+  - Análisis `0e0ec603-3f87-4a75-92af-5d2a8def4e54`, 18:13:55–18:16:23 America/Lima. Verificador con salida 0 y `cumple: true`; evidencias y comandos en `RESULTADO_SONARQUBE.md` y `EVALUACION_CALIDAD.md`.
+- **Decisiones técnicas adoptadas:**
+  - Interpretar cumplimiento total como 20/20 en los seis criterios del manual; exigir cobertura global ≥80% y mantener todo el código de aplicación en el alcance.
+  - Preservar los contratos obligatorios que aceptan `null`; no convertirlos en campos omitibles. La regla S8396 acepta expresamente las uniones anulables `Tipo | None`.
+  - El gate exige adicionalmente cero incidencias abiertas. La regla del manual otorga todos los puntos de hotspots cuando no existen.
+  - Versionar únicamente los reportes de cobertura/resultados que necesita el pipeline académico; conservar logs, historial y JSON de comprobación local ignorados.
+- **Bloqueadores / Riesgos identificados:**
+  - Sin bloqueadores para el cumplimiento local. La nota de 20/20 es una estimación reproducible, no una calificación institucional emitida.
+  - No se ejecutó el pipeline institucional. El historial de análisis requiere permisos distintos de los del token de proyecto; se consultó por separado con el administrador local sin exportar credenciales.
+  - El perfil/versión institucional puede diferir del local. Se conservan dos advertencias de deprecación de dependencias Python; no afectan la aprobación de pruebas ni del gate.
+- **Próximas tareas para la siguiente sesión:**
+  - Registrar/subir los cambios al GitLab institucional y comprobar `detect`, `quality`, `notify` y la calificación oficial, incluyendo los tres reportes de entrega.
+  - Regenerar cobertura y repetir el verificador después de cualquier cambio de código posterior.
+
+
+### Intervención de entorno de la sesión 29 — 2026-10-28
+- **Objetivos de la sesión:** Atender la solicitud de restaurar la virtualización necesaria para Docker Desktop antes de continuar la implementación.
+- **Tareas completadas:** Diagnóstico y restauración parcial de `TASK-32.8`. Se confirmó que `VirtualMachinePlatform` estaba deshabilitada y se habilitó con privilegios de administrador, sin reiniciar automáticamente. WSL ya estaba habilitado y el arranque del hipervisor ya figuraba en `Auto`.
+- **Resultados de validación:** La reparación finalizó con `Success: true` y `RestartRequired: true`; se verificaron los estados de los componentes y la configuración de arranque. Evidencias locales en `.reports/docker-virtualization/`: estados previos/posteriores, transcripción y `result.json`. Docker no respondió correctamente antes de la reparación; su funcionamiento posterior aún no se ha validado.
+- **Decisiones técnicas adoptadas:** Restaurar la Plataforma de máquina virtual requerida por WSL 2; conservar las distribuciones, los datos y la configuración restante. El resumen incorpora una tarea de recuperación de entorno; no se marcaron nuevos avances funcionales.
+- **Bloqueadores / Riesgos identificados:** Windows exige reiniciar para aplicar el componente. `TASK-32.8` permanece en progreso hasta comprobar Docker después del reinicio.
+- **Próximas tareas para la siguiente sesión:** Reiniciar Windows, abrir Docker Desktop y comprobar `docker version` y `docker compose ps` antes de retomar la implementación y SonarQube.
+
+### Sesión 29 — 2026-10-28
+- **Objetivos de la sesión:** Continuar implementación y obtener la máxima puntuación local de la rúbrica de SonarQube, conforme a la confirmación del usuario. Plan en [PLAN_SESION_29.md](PLAN_SESION_29.md).
+- **Tareas completadas:**
+  - `TASK-32.1`: auditoría de documentos, manual PDF, estado real y evidencias históricas; alcance delimitado y criterios de aceptación registrados.
+  - `TASK-32.2`: verificador estricto de condiciones globales, comparadores, umbrales, incidencias y métricas válidas; errores de consulta reemplazan éxitos históricos por `cumple: false`. 34 pruebas de rúbrica/verificador aprobadas.
+  - `TASK-32.3`: seis pruebas del visor doble para selección, navegación sincronizada, cierre, conservación del autor y revisión inmutable.
+  - `TASK-32.4`: corrección de la actualización del dictamen humano en resultados tras guardar desde el visor; cuatro pruebas de aplicación y seis de gestión de modelos, incluidos conflictos y recuperación.
+  - `TASK-32.5`: mínimos Vitest de 80% de líneas y 70% de ramas, con todo el frontend incluido; LCOV regenerado y rutas relativas verificadas.
+  - `TASK-32.6`: suite completa en Docker, frontend y navegador, tipos, lint, build y nuevo análisis SonarQube con gate efectivo.
+  - `TASK-32.7`: informes de calidad, plan, resumen y reportes de entrega actualizados; pipeline YAML y metadatos verificados localmente.
+  - `TASK-32.8`: verificación posterior a la intervención de virtualización y al reinicio del usuario: Docker 29.7.2 operativo y servicios de calidad saludables.
+- **Resultados de validación:**
+  - **137 pruebas Python aprobadas** en Docker en **110,78 s**, sin omisiones, dos deprecaciones de dependencias. Backend: **90,22%** de líneas, **72,95%** de ramas, **86,87%** combinado.
+  - **116 pruebas Vitest aprobadas**. Frontend completo: **86,57%** de líneas y **73,65%** de ramas; visor doble 100% de líneas, aplicación 81,13%, modelos 96,8%.
+  - **4 pruebas de navegador aprobadas** en **45,8 s** con Chrome local. Tipado estricto, lint, build y `git diff --check` correctos.
+  - SonarQube **Quality Gate PASSED**, **20/20 estimado localmente**, **85,0%** de cobertura global, **1,1%** de duplicación, A/A/A y **0 bugs, vulnerabilidades, code smells y hotspots**. Once condiciones evaluadas y aprobadas; ninguna ignorada.
+  - Análisis `167bc699-6ae2-47fe-9a44-3975bfc14ee1`, fechado a las **20:58:23 America/Lima**; escáner finalizado a las **21:02:09**. Verificador: código 0, `cumple: true`, sin incumplimientos.
+  - Reportes entregables: `.reports/coverage.xml`, `.reports/pytest.xml` y `frontend/coverage/lcov.info`. Evidencias locales detalladas en [RESULTADO_SONARQUBE.md](RESULTADO_SONARQUBE.md).
+- **Decisiones técnicas adoptadas:**
+  - Mantener 20/20 de la rúbrica como objetivo de nota; los mínimos adicionales de frontend detectan regresiones y no equivalen a exigir 100% de cobertura.
+  - Propagar ID de correspondencia y decisión por callbacks tipados, preservando los contratos REST y la predicción original.
+  - Reutilizar la imagen de pruebas con embeddings reales y ejecutar el escáner después de regenerar ambos reportes de cobertura; fuentes estables durante el análisis.
+  - Usar Chrome mediante la opción ya existente `CONVCOMP_BROWSER_EXECUTABLE`, sin instalar navegadores ni modificar su configuración global.
+- **Bloqueadores / Riesgos identificados:**
+  - Sin bloqueadores para el cierre local. La nota oficial de Quantum permanece pendiente: el único remoto configurado es GitHub y se requiere destino/acceso al GitLab institucional. No se ejecutó su pipeline.
+  - El escáner advierte de información SCM ausente en cambios sin commit; sí completó el análisis y las condiciones globales. No se alteraron commits ni se subieron cambios.
+  - La validación científica con anotaciones institucionales reales y la autenticación de revisores siguen fuera de este cierre de calidad.
+- **Próximas tareas para la siguiente sesión:**
+  - Completar la entrega institucional cuando se facilite el repositorio GitLab y verificar sus métricas oficiales, etapas y notificación.
+  - Delimitar el siguiente incremento de Fase 4 antes de implementar usuarios, autenticación, PostgreSQL o gestión documental.
+  - Repetir cobertura y análisis tras cambios posteriores de código.
+
+### Sesión 30 — 2026-10-28
+- **Objetivos de la sesión:** Rediseñar la aplicación con la composición SaaS de las capturas proporcionadas por el usuario, trasladando los azules a la paleta violeta académica adjunta, y conservar la máxima puntuación local de calidad.
+- **Tareas completadas:**
+  - `TASK-33.1`: identidad violeta/lavanda, navegación blanca, tipografía, controles y tarjetas compartidos, favicon propio y metadatos HTML en español.
+  - `TASK-33.2`: inicio con presentación del producto y panel real de evaluación. Componente reutilizable por sílabo con catálogo, metadatos, carga, estados y recuperación, conservando la API.
+  - `TASK-33.3`: catálogo, resultados, auditoría, modelos y guía adaptados; vista móvil de modelos en una columna; guía con foco contenido, Escape y restauración del foco. Capturas de escritorio y móvil inspeccionadas; contraste de textos secundarios corregido.
+  - `TASK-33.4`: cobertura regenerada, pruebas/tipos/lint/build aprobados, análisis SonarQube final, publicación Docker y documentación actualizada en [DISENO_WEB.md](DISENO_WEB.md) y [RESULTADO_SONARQUBE.md](RESULTADO_SONARQUBE.md).
+- **Resultados de validación:**
+  - **120 pruebas Vitest aprobadas**. Frontend completo: **88,86%** de líneas, **75,77%** de ramas, **87,26%** de sentencias y **78,93%** de funciones. LCOV relativo verificado.
+  - **6 pruebas de navegador aprobadas en 42,7 s** con Chrome local: dos del rediseño y cuatro científicas existentes. Escritorio 1440 × 1050 y móvil 390 × 844, sin desbordamiento horizontal en las vistas comprobadas.
+  - Tipado de aplicación/pruebas/navegador, lint, build y `git diff --check` correctos. Las pruebas de navegador cuentan con tipos DOM en su proyecto TypeScript.
+  - SonarQube **Quality Gate PASSED**, **20/20 estimado localmente**, **85,6%** de cobertura global, **0,8%** de duplicación, A/A/A y **0 bugs, vulnerabilidades, code smells y hotspots**. Verificador con código 0, `cumple: true` y sin incumplimientos.
+  - Análisis final `18cb74aa-78aa-4cac-ae4b-93d7dd9793a1`, fechado a las **23:01:22 America/Lima**; escáner finalizado a las **23:04:09**. Cobertura global de líneas **90,0%**, ramas **74,4%**; 12 524 líneas de código.
+  - Web y API saludables en `http://localhost:5173`. API 3.2.1/fase 3 y catálogo HTTP 200; sin excepciones JavaScript en la comprobación de publicación.
+  - Todas las fuentes Python de la API en Docker coinciden por SHA-256 con el repositorio; `pip check` sin incompatibilidades. Se preservan los volúmenes.
+- **Decisiones técnicas adoptadas:**
+  - Usar como referencia directa las tres imágenes adjuntas. El enlace de Dribbble devolvió HTTP 202 sin contenido en este entorno; no se atribuye su imagen a una consulta que no pudo completarse.
+  - Representar capacidades reales y acciones operativas, sin añadir precios, testimonios o métricas ficticias. Mantener el descargo institucional y la geometría de las evidencias PDF.
+  - Conservar estados académicos diferenciados de la marca violeta. Identificar un documento seleccionado como «Listo», sin implicar acreditación oficial.
+  - No modificar el backend ni repetir su suite por un cambio de interfaz; se reutilizan XML/JUnit de las 137 pruebas de la sesión 29 sobre las mismas fuentes.
+  - Actualizar las cuatro fuentes antiguas detectadas en la imagen de API mediante una capa de código sobre sus dependencias locales ya instaladas. Base anterior conservada como `convcomp-backend:runtime-session30`; procedimiento y Dockerfile temporal en `.reports/`.
+- **Bloqueadores / Riesgos identificados:**
+  - Sin bloqueadores locales. Se conservan las limitaciones de evaluación oficial de Quantum/GitLab y validación científica institucional.
+  - Las comprobaciones visuales cubren Chrome y los tamaños indicados; no constituyen una auditoría exhaustiva de WCAG ni de todos los dispositivos.
+  - El código permanece sin commit; las advertencias SCM del escáner no impidieron evaluar las condiciones globales.
+- **Próximas tareas para la siguiente sesión:**
+  - Recoger observaciones del usuario sobre el rediseño ya disponible en localhost:5173.
+  - Completar la entrega institucional cuando se facilite su repositorio y acceso.
+  - Delimitar el siguiente incremento funcional de Fase 4 y repetir los controles de calidad tras cambios posteriores.
+
+### Sesión 31 — 2026-10-28 a 2026-10-29
+- **Objetivos de la sesión:** Ampliar las funciones de comparación, prioridad elegida por el usuario, manteniendo la interfaz violeta y la máxima puntuación local de calidad.
+- **Tareas completadas:**
+  - `TASK-34.1`: dominio puro y contratos de lotes; de uno a cinco candidatos y presupuesto de 20 000 pares de contenidos. Ranking determinista por cobertura del objetivo, afinidad global e ID, sin sumar coberturas entre candidatos.
+  - `TASK-34.2`: tres tablas SQLite aditivas, solicitud UUID idempotente, resultados insertados por candidato y cierre independiente. Relectura sin duplicados y conservación de avances ante interrupción verificadas.
+  - `TASK-34.3`: API de creación, historial, consulta y exportación; versión del modelo fija por ejecución, instancia de inferencia propia y error explícito si no carga el modelo activo. Los fallos de un candidato no descartan a los demás ni reciben puntuaciones ficticias.
+  - `TASK-34.4`: pestaña Por lotes, acceso desde Evaluar, selección/búsqueda, estados, ranking, informes, recuperación de solicitudes e historial. Errores al abrir un análisis visibles. Versión de aplicación/manifiestos actualizada a 3.3.0, fase 3.
+  - `TASK-34.5`: suites, cobertura, tipado, lint, build, inspección visual, publicación Docker, nuevo análisis SonarQube y documentación en [COMPARACION_POR_LOTES.md](COMPARACION_POR_LOTES.md), [VALIDACION_NAVEGADOR.md](VALIDACION_NAVEGADOR.md) y [RESULTADO_SONARQUBE.md](RESULTADO_SONARQUBE.md).
+- **Resultados de validación:**
+  - **172 pruebas Python aprobadas en Docker en 58,59 s**, 35 nuevas, sin omisiones y con dos deprecaciones de dependencias. Backend: **90,86%** de líneas y **73,97%** de ramas; XML y JUnit regenerados.
+  - **134 pruebas Vitest aprobadas**; frontend completo: **89,69%** de líneas, **76,17%** de ramas, **88,41%** de sentencias y **81,48%** de funciones. LCOV relativo regenerado, mínimos 80/70 aprobados.
+  - **8 pruebas Chrome aprobadas en 1,2 min** en la ejecución final, incluidas dos de lotes con API real y datos temporales: comparación/exportación/recarga sin duplicados y resultado parcial móvil. Capturas 1440 × 1050 y 390 × 844 inspeccionadas.
+  - Tipado estricto de aplicación/pruebas/navegador, lint, build y `git diff --check` correctos. El único hallazgo del primer análisis fue texto accesible explícito en etiquetas de candidatos: corregido y verificado en la ejecución final.
+  - SonarQube **Quality Gate PASSED**, **20/20 estimado localmente**, **86,4%** de cobertura global, **0,7%** de duplicación, A/A/A y **0 bugs, vulnerabilidades, code smells y hotspots**. Verificador con código 0, `cumple: true` y sin incumplimientos.
+  - Análisis `baa7f940-1d0e-497d-b968-9465156d0a9b`, **2026-10-29 00:01:49 America/Lima**; escáner finalizado a las **00:04:31**. Líneas **90,7%**, ramas **75,1%**, 13 206 líneas de código.
+  - Web saludable en `http://localhost:5173`, API **3.3.0/fase 3**, catálogo y lotes HTTP 200. Chrome sin errores JavaScript ni desbordamiento horizontal móvil. Las 70 fuentes Python desplegadas coinciden por SHA-256 y `pip check` no encontró incompatibilidades.
+- **Decisiones técnicas adoptadas:**
+  - Extender la comparación existente antes de iniciar autenticación o migraciones de Fase 4. Cada resultado conserva su evidencia, informe y revisión independientes; los contadores del lote son operativos.
+  - Ejecutar secuencialmente, fijar modelo/pesos/umbrales y reclamar el UUID atómicamente. Un reintento devuelve lo persistido; una solicitud cambiada con la misma clave se rechaza con 409.
+  - Guardar cada avance y distinguir RUNNING/COMPLETED/PARTIAL/FAILED. RUNNING puede corresponder a una interrupción; no se promete reanudación automática. La interfaz conserva la clave en reintentos y ofrece consulta explícita.
+  - Probar los flujos con bases temporales; consultar el despliegue real sin crear lotes de prueba sobre datos del usuario. La actualización de esquema es aditiva.
+  - Reutilizar las dependencias locales de la imagen API mediante una capa de código, conservar la base como `convcomp-backend:runtime-session31`, reconstruir frontend y mantener los volúmenes.
+- **Bloqueadores / Riesgos identificados:**
+  - Sin bloqueadores locales. Las comparaciones individuales y su inclusión en el lote no son una sola transacción: una interrupción entre guardados puede dejar el análisis en el historial individual. Antes de repetir pendientes debe consultarse ese registro.
+  - Ejecución síncrona sin cancelación ni reanudación automática; el límite de candidatos/pares acota el trabajo. Autenticación y validación científica con datos institucionales siguen pendientes.
+  - La nota oficial de Quantum/GitLab permanece pendiente. Los cambios están sin commit y las advertencias SCM no impidieron las condiciones globales. No se subieron cambios ni se ejecutó el pipeline institucional.
+- **Próximas tareas para la siguiente sesión:**
+  - Recoger observaciones del usuario sobre el flujo de lotes y contrastarlo con sus documentos reales.
+  - Priorizar el siguiente incremento según su uso: reanudación de trabajo pendiente, comparaciones adicionales o acceso de revisores.
+  - Completar entrega institucional cuando se disponga de destino y acceso; regenerar cobertura y repetir análisis tras cualquier cambio de código.

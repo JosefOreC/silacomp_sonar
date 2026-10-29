@@ -284,4 +284,22 @@ class DatabaseManager:
             )
             """)
 
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS comparison_batches (
+                id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload_json TEXT NOT NULL
+            )
+            """)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS comparison_batch_results (
+                batch_id TEXT NOT NULL REFERENCES comparison_batches(id),
+                compared_syllabus_id TEXT NOT NULL, payload_json TEXT NOT NULL,
+                PRIMARY KEY (batch_id, compared_syllabus_id)
+            )
+            """)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS comparison_batch_completions (
+                batch_id TEXT PRIMARY KEY REFERENCES comparison_batches(id), completed_at TEXT NOT NULL
+            )
+            """)
+
             conn.commit()

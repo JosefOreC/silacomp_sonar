@@ -167,8 +167,8 @@ class CreateReviewRequest(BaseModel):
 class ReviewResponse(BaseModel):
     id: str
     comparison_id: str
-    match_id: Optional[str]
-    prediction_before: Optional[MatchClassification]
+    match_id: str | None
+    prediction_before: MatchClassification | None
     human_decision: MatchClassification
     correction_type: CorrectionType
     justification: str
@@ -197,22 +197,22 @@ class GroundTruthPairResponse(BaseModel):
     comparison_id: str
     objective_item_id: str
     compared_item_id: str
-    match_id: Optional[str]
+    match_id: str | None
     objective_text: str
     compared_text: str
     prediction_label: str
     features: Dict[str, float]
     feature_source_review_id: str
-    source_university_obj: Optional[str]
-    source_university_cmp: Optional[str]
-    source_course_obj: Optional[str]
-    source_course_cmp: Optional[str]
-    source_syllabus_obj: Optional[str]
-    source_syllabus_cmp: Optional[str]
-    source_page_obj: Optional[int]
-    source_page_cmp: Optional[int]
+    source_university_obj: str | None
+    source_university_cmp: str | None
+    source_course_obj: str | None
+    source_course_cmp: str | None
+    source_syllabus_obj: str | None
+    source_syllabus_cmp: str | None
+    source_page_obj: int | None
+    source_page_cmp: int | None
     status: ConsensusStatus
-    consensus_label: Optional[MatchClassification]
+    consensus_label: MatchClassification | None
     reviewer_count: int
     review_count: int
     votes: List[GroundTruthVoteResponse]
@@ -239,9 +239,9 @@ class ReviewerAgreementResponse(BaseModel):
     reviewer_b: str
     common_pairs: int
     agreements: int
-    observed_agreement: Optional[float]
-    expected_agreement: Optional[float]
-    cohen_kappa: Optional[float]
+    observed_agreement: float | None
+    expected_agreement: float | None
+    cohen_kappa: float | None
 
 
 class AnnotationCoverageResponse(BaseModel):
@@ -251,28 +251,28 @@ class AnnotationCoverageResponse(BaseModel):
     disagreement_pairs: int
     pending_pairs: int
     review_events: int
-    reviewed_percentage: Optional[float]
-    consensus_percentage: Optional[float]
+    reviewed_percentage: float | None
+    consensus_percentage: float | None
 
 
 class AnnotationCaseResponse(BaseModel):
     case_id: str
     comparison_id: str
     model_version: str
-    match_id: Optional[str]
+    match_id: str | None
     objective_item_id: str
     compared_item_id: str
     objective_text: str
     compared_text: str
-    objective_page: Optional[int]
-    compared_page: Optional[int]
-    classification: Optional[MatchClassification]
-    score: Optional[float]
+    objective_page: int | None
+    compared_page: int | None
+    classification: MatchClassification | None
+    score: float | None
     status: Literal["UNREVIEWED", "SINGLE_REVIEW", "DISAGREEMENT", "CONSENSUS"]
     reviewer_ids: List[str]
     review_count: int
-    reason: Optional[PriorityReason]
-    boundary_distance: Optional[float]
+    reason: PriorityReason | None
+    boundary_distance: float | None
     uncertain_prediction: bool
     near_boundary: bool
 
@@ -297,7 +297,7 @@ class CreateAnnotationBatchRequest(BaseModel):
 class AnnotationBatchResponse(BaseModel):
     id: str
     reviewer_id: str
-    comparison_id: Optional[str]
+    comparison_id: str | None
     strategy_version: str
     reference_thresholds: Dict[str, float]
     created_at: datetime
@@ -315,7 +315,7 @@ class AnnotationBatchCompletionResponse(BaseModel):
 
 class AnnotationBatchProgressResponse(BaseModel):
     batch: AnnotationBatchResponse
-    completion: Optional[AnnotationBatchCompletionResponse]
+    completion: AnnotationBatchCompletionResponse | None
     items: List[AnnotationCaseResponse]
     coverage_current: AnnotationCoverageResponse
     scope_current: AnnotationCoverageResponse

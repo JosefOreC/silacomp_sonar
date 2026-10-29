@@ -1,0 +1,51 @@
+import { test, expect } from '@playwright/test';
+
+test('el inicio violeta permite iniciar una evaluación y consultar la metodología', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.setViewportSize({ width: 1440, height: 1050 });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Dos sílabos. Una mirada más clara.' })).toBeVisible();
+  await expect(page.getByLabel('Documento PDF objetivo')).toBeAttached();
+  await expect(page.getByLabel('Documento PDF comparado')).toBeAttached();
+  await page.screenshot({ path: '../.reports/session30-home-desktop.png', fullPage: true });
+  await page.getByRole('link', { name: 'Comenzar evaluación' }).click();
+  await expect(page).toHaveURL(/#comparison-workspace$/);
+  await expect(page.getByRole('heading', { name: 'Empieza con tus documentos' })).toBeInViewport();
+  await page.getByRole('button', { name: 'Conocer la metodología' }).click();
+  const guide = page.getByRole('dialog');
+  await expect(guide).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(guide.getByRole('button').last()).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(guide.getByRole('button').first()).toBeFocused();
+  await expect(guide.getByRole('button', { name: /Ponderación Multivariada/ })).toBeVisible();
+  await guide.getByRole('button', { name: /Ponderación Multivariada/ }).click();
+  await page.screenshot({ path: '../.reports/session30-guide-desktop.png' });
+  await page.keyboard.press('Escape');
+  await expect(guide).not.toBeVisible();
+  await expect(page.getByRole('button', { name: 'Conocer la metodología' })).toBeFocused();
+  expect(errors).toEqual([]);
+});
+
+test('la navegación y los paneles se adaptan a móvil sin desbordar la página', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Dos sílabos. Una mirada más clara.' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: '../.reports/session30-home-mobile.png', fullPage: true });
+  await page.getByRole('button', { name: 'Registro de Sílabos', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Nueva Evaluación Curricular' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'Modelos IA', exact: true }).click();
+  await expect(page.getByLabel('Algoritmo')).toBeVisible();
+  await expect(page.getByText('weights · semantic', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: '../.reports/session30-models-mobile.png', fullPage: true });
+  await page.getByRole('button', { name: 'Guía Metodológica', exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.screenshot({ path: '../.reports/session30-guide-mobile.png' });
+  await page.getByRole('button', { name: '✕ Cerrar Guía' }).click();
+  await page.getByRole('button', { name: 'ConvComp, inicio' }).click();
+  await expect(page.getByRole('heading', { name: 'Empieza con tus documentos' })).toBeVisible();
+});

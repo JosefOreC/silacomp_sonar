@@ -22,6 +22,14 @@ def test_health_check(client: TestClient) -> None:
     assert data["version"] == client.get("/openapi.json").json()["info"]["version"]
 
 
+@pytest.mark.parametrize("filename,content", [("vacio.pdf", b""), ("corrupto.pdf", b"no es un PDF")])
+def test_invalid_pdf_returns_client_error_without_persisting(client, filename, content, tmp_path):
+    response = client.post("/api/syllabi/upload", files={"file": (filename, content, "application/pdf")})
+    assert response.status_code == 400
+    assert client.get("/api/syllabi").json() == []
+    assert not list((tmp_path / "data" / "uploads").glob("*.pdf"))
+
+
 def test_upload_digital_and_scanned_pdf(client: TestClient, sample_digital_pdf: str, blank_scanned_pdf: str) -> None:
     # 1. Cargar PDF digital válido
     with open(sample_digital_pdf, "rb") as f:

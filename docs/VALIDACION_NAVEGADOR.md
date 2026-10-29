@@ -1,4 +1,4 @@
-# Validación integrada de evaluación científica
+# Validación integrada en navegador
 
 La suite usa Chromium real, el frontend de Vite y los endpoints FastAPI sobre una base temporal. Verifica la integración del panel de evaluación científica con la API. La extracción de PDFs y el rendimiento de embeddings quedan fuera de esta suite: las anotaciones, vectores y modelo son fixtures controlados reutilizados de las pruebas de integración.
 
@@ -40,4 +40,42 @@ Las pruebas usan una sola ejecución concurrente para evitar escrituras superpue
 
 El comando muestra el resultado de cada caso y genera `frontend/playwright-report/index.html`. Para abrirlo, ejecute `npm.cmd run test:browser:report`. Las trazas y capturas de fallos quedan en `frontend/test-results`; el primer caso guarda también `evaluacion-reservada.png` con el resultado completo. Estos archivos generados están excluidos de Git.
 
-La suite verifica un viewport de escritorio de 1440 × 1000 en Chromium. No acredita compatibilidad móvil, otros navegadores, identidad real de revisores ni rendimiento científico con datos institucionales. Tampoco ejecuta entrenamiento real, OCR, revisión desde el visor o autenticación. La aceptación manual por usuarios sigue pendiente.
+Los cuatro casos científicos usan un viewport de escritorio de 1440 × 1000 en Chromium. No acreditan identidad real de revisores ni rendimiento científico con datos institucionales. Tampoco ejecutan entrenamiento real, OCR, revisión desde el visor o autenticación. La aceptación manual por usuarios sigue pendiente.
+
+## Rediseño violeta — 2026-10-28
+
+`e2e/design.spec.ts` incorpora dos casos adicionales. El primero comprueba el
+inicio, el salto al espacio de evaluación, la guía, el recorrido del foco con
+Tab/Shift+Tab, el cierre con Escape y la restauración del foco. El segundo usa
+390 × 844 para recorrer inicio, catálogo, modelos y guía sin desbordamiento de
+la página. Las capturas de escritorio usan 1440 × 1050.
+
+Los seis casos aprobaron en **42,7 s** con Chrome local mediante
+`CONVCOMP_BROWSER_EXECUTABLE`. Se inspeccionaron las capturas conservadas en
+`.reports/session30-*.png`. La publicación Docker se verificó por separado en
+`http://localhost:5173`: API y catálogo HTTP 200, sin excepciones JavaScript ni
+desbordamiento horizontal móvil.
+
+Esta comprobación cubre las vistas y tamaños indicados; no acredita todos los
+dispositivos ni otros motores de navegador. El alcance visual y la paleta se
+describen en [DISENO_WEB.md](DISENO_WEB.md).
+
+## Comparación por lotes — sesión 31
+
+`e2e/batch-comparison.spec.ts` añade dos flujos con API real y almacenamiento
+temporal. El primero selecciona un objetivo y dos candidatos, comprueba el
+ranking, descarga el JSON y un PDF individual, abre un análisis y recupera
+el lote tras recargar. Repite además el UUID para comprobar que no se crean
+comparaciones duplicadas. El segundo usa 390 × 844 y un candidato sin temas:
+verifica el estado parcial, la conservación del resultado válido y la ausencia
+de desbordamiento horizontal de la página. La tabla tiene desplazamiento propio.
+
+La preparación añade un candidato vacío al catálogo temporal; no escribe datos
+de prueba en Docker ni en la base de desarrollo. Las **8 pruebas** (cuatro
+científicas, dos visuales y dos de lotes) aprobaron en **1,2 min** con Chrome
+local. Se inspeccionaron `.reports/session31-batch-desktop.png` (1440 × 1050)
+y `.reports/session31-batch-mobile.png` (390 × 844).
+
+Estos casos verifican integración y recuperación; no miden precisión del motor
+con documentos institucionales. El contrato y los límites de recuperación se
+describen en [COMPARACION_POR_LOTES.md](COMPARACION_POR_LOTES.md).

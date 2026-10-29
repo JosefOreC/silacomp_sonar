@@ -81,7 +81,7 @@ export const ScientificEvaluationPanel = ({ models }: { models: ModelVersion[] }
             {data[2].map((c) => <option key={c.id} value={c.id}>{c.objective_course} / {c.compared_course} · {c.id}</option>)}
           </select>
         </label>
-        <button className="btn btn-secondary" disabled={busy || !name.trim() || comparisonIds.length === 0 || comparisonIds.length > 20}>Crear conjunto reservado</button>
+        <button type="submit" className="btn btn-secondary" disabled={busy || !name.trim() || comparisonIds.length === 0 || comparisonIds.length > 20}>Crear conjunto reservado</button>
       </form>
       <form onSubmit={run} style={{ display: 'grid', gap: 12, marginTop: 24 }}>
         <h4>2. Comparar versiones</h4>
@@ -101,7 +101,7 @@ export const ScientificEvaluationPanel = ({ models }: { models: ModelVersion[] }
           <label>Pérdida máxima de F1 por comparación{' '}<input type="number" min={0} max={1} step={.01} value={criteria.max_per_comparison_f1_drop}
             disabled={busy} onChange={(e) => setCriteria((c) => ({ ...c, max_per_comparison_f1_drop: Number(e.target.value) }))} /></label>
           <p>Se exigen al menos dos grupos independientes y ejemplos positivos y negativos. Recall y errores de cobertura deben mantenerse o mejorar, tanto globalmente como por comparación según los criterios registrados.</p>
-          <button className="btn btn-primary" disabled={busy || !snapshotId || !candidate || candidate === reference}>Ejecutar comparación reservada</button>
+          <button type="submit" className="btn btn-primary" disabled={busy || !snapshotId || !candidate || candidate === reference}>Ejecutar comparación reservada</button>
         </>}
       </form>
       <h4>Experimentos recientes</h4>

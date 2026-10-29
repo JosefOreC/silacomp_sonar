@@ -4,13 +4,13 @@ import { api } from '../services/api';
 import { PdfDocumentViewer } from './PdfDocumentViewer';
 import { EvidenceNavigator } from './EvidenceNavigator';
 import { ViewerReviewPanel } from './ViewerReviewPanel';
-import type { Comparison, Syllabus } from '../types';
+import type { Comparison, MatchClassification, Syllabus } from '../types';
 
 interface DualPdfViewerProps {
   comparison: Comparison;
   initialMatchId?: string;
   onClose: () => void;
-  onReviewSubmitted: () => void;
+  onReviewSubmitted: (matchId: string, decision: MatchClassification) => void;
   objectiveSyllabus?: Syllabus;
   comparedSyllabus?: Syllabus;
 }
@@ -101,11 +101,11 @@ export const DualPdfViewer: React.FC<DualPdfViewerProps> = ({
   const cmpPdfUrl = api.getSyllabusPdfUrl(comparison.compared_syllabus_id);
 
   return (
-    <div
+    <div className="pdf-workspace"
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: '#020617',
+        backgroundColor: '#160c23',
         zIndex: 1000,
         display: 'flex',
         flexDirection: 'column',

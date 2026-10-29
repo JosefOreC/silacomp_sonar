@@ -36,6 +36,7 @@ def main() -> None:
             for group in (1, 2):
                 annotate_complete(client, group)
             seed_comparison(3, size=2)
+            seed_comparison(4, size=0)
             register_candidate()
         uvicorn.run(app, host="127.0.0.1", port=18765, log_level="warning")
 

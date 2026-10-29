@@ -1,0 +1,23 @@
+project:
+  name: "Implementación de un sistema web basado en tecnologías OCR y NLP para mejorar el proceso de convalidación académica en la Universidad Continental, 2026."
+  version: "3.3.0"
+  description: "Proyecto de software para evaluación de calidad"
+
+stack:
+  detect: true
+
+academic:
+  course: "Taller de Investigación II"
+  evaluation_name: "Evaluación del Parcial"
+  partial_weight_percentage: 80
+  evaluator:
+    name: "Maglioni Arana Caparachin"
+    email: "marana@continental.edu.pe"
+    role: "Docente"
+  members:
+    - name: "Josef Pablo Ore Campos"
+      code: "71660137"
+      email: "71660137@continental.edu.pe"
+    - name: "Alex Cueva Ricse"
+      code: "72917514"
+      email: "72917514@continental.edu.pe"

@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.comparison_router import router as comparison_router
+from app.api.comparison_batch_router import router as comparison_batch_router
 from app.api.dataset_router import router as dataset_router
 from app.api.ground_truth_router import router as ground_truth_router
 from app.api.active_learning_router import router as active_learning_router
@@ -37,6 +38,7 @@ DatabaseManager()
 # Registrar Routers
 app.include_router(syllabus_router, prefix="/api")
 app.include_router(comparison_router, prefix="/api")
+app.include_router(comparison_batch_router, prefix="/api")
 app.include_router(review_router, prefix="/api")
 app.include_router(dataset_router, prefix="/api")
 app.include_router(ground_truth_router, prefix="/api")

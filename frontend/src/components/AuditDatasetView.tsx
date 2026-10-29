@@ -24,10 +24,10 @@ export const AuditDatasetView: React.FC<{ onOpenComparison?: (id: string) => voi
   }, [annotationRevision]);
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '30px auto', padding: '0 20px' }}>
+    <div className="audit-page page-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 4px 0', color: 'var(--text-primary)', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+          <h2 className="page-heading">
             Registro Institucional de Auditoría y Dictámenes
           </h2>
           <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -50,14 +50,14 @@ export const AuditDatasetView: React.FC<{ onOpenComparison?: (id: string) => voi
           Consultando registro de auditoría...
         </div>
       ) : error ? (
-        <div style={{ padding: '16px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '0px', color: '#fca5a5' }}>
+        <div style={{ padding: '16px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: 'var(--radius-md)', color: 'var(--nomatch-color)' }}>
           {error}
         </div>
       ) : stats ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Métricas Globales */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-            <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '0px' }}>
+            <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
               <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-primary)' }}>
                 {stats.total_examples}
               </div>
@@ -66,8 +66,8 @@ export const AuditDatasetView: React.FC<{ onOpenComparison?: (id: string) => voi
               </div>
             </div>
 
-            <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '0px' }}>
-              <div style={{ fontSize: '32px', fontWeight: 800, color: '#34d399' }}>
+            <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--match-color)' }}>
                 {stats.by_ground_truth.MATCH || 0}
               </div>
               <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px', letterSpacing: '0.04em' }}>
@@ -75,7 +75,7 @@ export const AuditDatasetView: React.FC<{ onOpenComparison?: (id: string) => voi
               </div>
             </div>
 
-            <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '0px' }}>
+            <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
               <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--accent-warning)' }}>
                 {stats.by_ground_truth.PARTIAL_MATCH || 0}
               </div>
@@ -84,7 +84,7 @@ export const AuditDatasetView: React.FC<{ onOpenComparison?: (id: string) => voi
               </div>
             </div>
 
-            <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '0px' }}>
+            <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
               <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--accent-danger)' }}>
                 {stats.by_ground_truth.NO_MATCH || 0}
               </div>
@@ -95,7 +95,7 @@ export const AuditDatasetView: React.FC<{ onOpenComparison?: (id: string) => voi
           </div>
 
           {/* Desglose por Decisión Humana */}
-          <div className="card" style={{ background: 'var(--bg-secondary)', borderRadius: '0px' }}>
+          <div className="card" style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
             <h3 style={{ fontSize: '14px', color: 'var(--text-primary)', marginBottom: '14px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
               Distribución por Dictamen Docente Definitivo
             </h3>
@@ -103,7 +103,7 @@ export const AuditDatasetView: React.FC<{ onOpenComparison?: (id: string) => voi
               {Object.entries(stats.by_ground_truth).map(([dec, count]) => {
                 const conf = CLASSIFICATIONS_ES[dec as MatchClassification];
                 return (
-                  <div key={dec} style={{ background: 'var(--bg-primary)', padding: '12px', borderRadius: '0px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+                  <div key={dec} style={{ background: 'var(--bg-primary)', padding: '12px', borderRadius: 'var(--radius-md)', textAlign: 'center', border: '1px solid var(--border-color)' }}>
                     <div style={{ fontSize: '20px', fontWeight: 700, color: conf?.color || 'var(--text-primary)' }}>{count}</div>
                     <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>
                       {conf?.label || dec}
@@ -115,7 +115,7 @@ export const AuditDatasetView: React.FC<{ onOpenComparison?: (id: string) => voi
           </div>
 
           {/* Información Metodológica Institucional */}
-          <div className="card" style={{ background: 'var(--bg-secondary)', fontSize: '13px', lineHeight: 1.6, color: 'var(--text-secondary)', borderRadius: '0px' }}>
+          <div className="card" style={{ background: 'var(--bg-secondary)', fontSize: '13px', lineHeight: 1.6, color: 'var(--text-secondary)', borderRadius: 'var(--radius-md)' }}>
             <h4 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
               Principio de Inmutabilidad y Trazabilidad Institucional
             </h4>

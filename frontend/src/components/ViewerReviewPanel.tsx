@@ -5,7 +5,7 @@ import type { ContentMatch, CorrectionType, MatchClassification } from '../types
 
 interface ViewerReviewPanelProps {
   match: ContentMatch;
-  onReviewSubmitted: () => void;
+  onReviewSubmitted: (matchId: string, decision: MatchClassification) => void;
   reviewerId: string;
   onReviewerChange: (value: string) => void;
 }
@@ -62,7 +62,7 @@ export const ViewerReviewPanel: React.FC<ViewerReviewPanelProps> = ({
         text: 'Dictamen registrado exitosamente en el módulo de auditoría.',
       });
       setJustification('');
-      onReviewSubmitted();
+      onReviewSubmitted(match.id, decision);
     } catch (err: unknown) {
       setStatusMessage({
         type: 'error',

@@ -148,10 +148,13 @@ docker compose -f compose.sonarqube.yaml --profile tools run --rm sonar-scanner
 ```
 
 `sonar-project.properties` incluye el backend Python y el frontend
-TypeScript/React, e identifica las pruebas Python y Playwright. Importa
-la cobertura del backend; no se configura una cobertura de frontend inexistente.
-SonarQube seguirá mostrando el frontend en sus métricas, incluida su falta de
-cobertura. No se excluye el frontend para ocultar ese resultado.
+TypeScript/React, e identifica las pruebas Python, Vitest y Playwright. Antes
+del análisis, ejecutar también `npm.cmd run test:coverage` desde `frontend`.
+Importa cobertura Python y `frontend/coverage/lcov.info`, sin exclusiones de
+carpetas de fuentes. Los XML Python y LCOV deben versionarse para la entrega
+académica; los demás artefactos de `.reports` permanecen ignorados. Consulte
+[EVALUACION_CALIDAD.md](EVALUACION_CALIDAD.md) para el gate de 20 puntos,
+los metadatos de entrega y la verificación reproducible.
 
 El escáner recibe `SONAR_TOKEN` por entorno y se conecta internamente a
 `http://sonarqube:9000`, según la [guía oficial del escáner Docker](https://docs.sonarsource.com/sonarqube-community-build/analyzing-source-code/scanners/sonarscanner).

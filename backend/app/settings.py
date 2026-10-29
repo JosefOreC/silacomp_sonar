@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 
-APP_VERSION = "3.2.1"
+APP_VERSION = "3.3.0"
 APP_PHASE = 3
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 

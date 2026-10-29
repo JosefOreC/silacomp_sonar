@@ -5,6 +5,46 @@
 
 export type MatchClassification = 'MATCH' | 'PARTIAL_MATCH' | 'UNCERTAIN' | 'NO_MATCH';
 
+export type AppTab = 'upload' | 'dashboard' | 'results' | 'dataset' | 'models' | 'batches';
+
+export interface ComparisonBatchRequest {
+  request_id: string;
+  objective_syllabus_id: string;
+  compared_syllabus_ids: string[];
+}
+
+export interface BatchSyllabus {
+  id: string;
+  title: string;
+  university: string | null;
+}
+
+export interface BatchResult {
+  compared_syllabus_id: string;
+  comparison_id: string | null;
+  global_score: number | null;
+  objective_coverage: number | null;
+  compared_coverage: number | null;
+  counts: Partial<Record<MatchClassification, number>>;
+  error_code: string | null;
+  error: string | null;
+}
+
+export interface ComparisonBatch {
+  id: string;
+  objective: BatchSyllabus;
+  candidates: BatchSyllabus[];
+  model_version: string;
+  weights: Record<string, number>;
+  thresholds: Record<string, number>;
+  created_at: string;
+  completed_at: string | null;
+  status: 'RUNNING' | 'COMPLETED' | 'PARTIAL' | 'FAILED';
+  ranking_rule: string;
+  ranking: string[];
+  results: BatchResult[];
+}
+
 export type CorrectionType =
   | 'CONFIRMED'
   | 'FALSE_POSITIVE'

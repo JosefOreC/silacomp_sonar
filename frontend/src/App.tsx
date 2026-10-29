@@ -10,13 +10,15 @@ import { ReviewModal } from './components/ReviewModal';
 import { AuditDatasetView } from './components/AuditDatasetView';
 import { SupportGuideModal } from './components/SupportGuideModal';
 import { api } from './services/api';
-import type { Comparison, ContentMatch, MatchClassification, Syllabus } from './types';
+import type { AppTab, Comparison, ContentMatch, MatchClassification, Syllabus } from './types';
 
 const DualPdfViewer = lazy(() => import('./components/DualPdfViewer').then((m) => ({ default: m.DualPdfViewer })));
 const ModelManagementView = lazy(() => import('./components/ModelManagementView').then((m) => ({ default: m.ModelManagementView })));
+const BatchComparisonView = lazy(() => import('./components/BatchComparisonView').then(m => ({ default: m.BatchComparisonView })));
 
 export const App: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<'upload' | 'dashboard' | 'results' | 'dataset' | 'models'>('upload');
+  const [currentTab, setCurrentTab] = useState<AppTab>('upload');
+  const [comparisonError, setComparisonError] = useState<string | null>(null);
   const [syllabi, setSyllabi] = useState<Syllabus[]>([]);
   const [activeComparison, setActiveComparison] = useState<Comparison | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<ContentMatch | null>(null);
@@ -44,6 +46,7 @@ export const App: React.FC = () => {
   };
 
   const handleComparisonCreated = (comp: Comparison) => {
+    setComparisonError(null);
     setActiveComparison(comp);
     setSelectedMatch(null);
     setCurrentTab('results');
@@ -51,6 +54,7 @@ export const App: React.FC = () => {
 
   const handleSelectComparison = async (comparisonId: string) => {
     setLoadingComparison(true);
+    setComparisonError(null);
     try {
       const comp = await api.getComparison(comparisonId);
       setActiveComparison(comp);
@@ -58,6 +62,7 @@ export const App: React.FC = () => {
       setCurrentTab('results');
     } catch (err) {
       console.error('Error loading comparison:', err);
+      setComparisonError(err instanceof Error ? err.message : 'No se pudo recuperar el análisis. Vuelva a intentarlo.');
     } finally {
       setLoadingComparison(false);
     }
@@ -71,20 +76,23 @@ export const App: React.FC = () => {
   const cmpSyllabus = syllabi.find((s) => s.id === activeComparison?.compared_syllabus_id);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
+    <div className="app-shell" data-view={currentTab}>
       <Header
         currentTab={currentTab}
-        onSelectTab={setCurrentTab}
+        onSelectTab={tab => { setCurrentTab(tab); setComparisonError(null); }}
         hasActiveComparison={Boolean(activeComparison)}
         onOpenGuide={() => setIsGuideOpen(true)}
       />
 
-      <main style={{ flex: 1, paddingBottom: '60px' }}>
+      <main id="main-content" className="app-main">
+        {comparisonError && <p className="feedback feedback-error page-container" role="alert">{comparisonError}</p>}
         {currentTab === 'upload' && (
           <SyllabusUploader
             onComparisonCreated={handleComparisonCreated}
             existingSyllabi={syllabi}
             onSyllabusUploaded={fetchSyllabi}
+            onOpenGuide={() => setIsGuideOpen(true)}
+            onOpenBatch={() => setCurrentTab('batches')}
           />
         )}
 
@@ -97,7 +105,7 @@ export const App: React.FC = () => {
         )}
 
         {currentTab === 'results' && (
-          <div style={{ maxWidth: '1360px', margin: '24px auto', padding: '0 20px' }}>
+          <div className="results-page page-container">
             {loadingComparison ? (
               <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
                 Cargando análisis de correspondencia...
@@ -147,6 +155,11 @@ export const App: React.FC = () => {
 
         {currentTab === 'dataset' && <AuditDatasetView onOpenComparison={handleSelectComparison} />}
 
+        {currentTab === 'batches' && <Suspense fallback={<p role="status">Cargando comparación por lotes...</p>}>
+          <BatchComparisonView syllabi={syllabi} onOpenComparison={handleSelectComparison}
+            onGoToUpload={() => setCurrentTab('upload')} />
+        </Suspense>}
+
         {currentTab === 'models' && (
           <Suspense fallback={<p role="status">Cargando gestión de modelos...</p>}>
             <ModelManagementView />
@@ -162,9 +175,7 @@ export const App: React.FC = () => {
           comparison={activeComparison}
           initialMatchId={pdfViewerMatch.id}
           onClose={() => setPdfViewerMatch(null)}
-          onReviewSubmitted={() => {
-            // Refrescar lista de sílabos o datos si es necesario
-          }}
+          onReviewSubmitted={handleReviewSaved}
           objectiveSyllabus={objSyllabus}
           comparedSyllabus={cmpSyllabus}
         />
@@ -186,8 +197,9 @@ export const App: React.FC = () => {
       />
 
       {/* Footer */}
-      <footer style={{ borderTop: '1px solid var(--border-color)', background: 'var(--bg-secondary)', padding: '16px 24px', textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
-        ConvComp · Sistema Institucional de Análisis y Pre-Evaluación de Correspondencia Curricular
+      <footer className="site-footer">
+        <div><strong>ConvComp<span>.</span></strong><span>Correspondencia académica con evidencia.</span></div>
+        <p>El presente resultado es una pre-evaluación computacional explicable de correspondencia académica. No sustituye la evaluación oficial ni constituye resolución vinculante de convalidación.</p>
       </footer>
     </div>
   );

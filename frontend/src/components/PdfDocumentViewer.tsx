@@ -162,7 +162,7 @@ export const PdfDocumentViewer: React.FC<PdfDocumentViewerProps> = ({
   }, [pdfDoc, pageNumber, totalPages, scale, fitMode, regions]);
 
   useEffect(() => {
-    renderPage();
+    void renderPage();
   }, [renderPage]);
 
   // Manejo de Zoom

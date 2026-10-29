@@ -42,6 +42,7 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 WORKDIR /workspace
 COPY --chown=convcomp:convcomp backend/app ./backend/app
 COPY --chown=convcomp:convcomp tests ./tests
+COPY --chown=convcomp:convcomp scripts ./scripts
 COPY --chown=convcomp:convcomp .coveragerc ./.coveragerc
 RUN chown convcomp:convcomp /workspace
 ENV PYTHONPATH=/workspace/backend \

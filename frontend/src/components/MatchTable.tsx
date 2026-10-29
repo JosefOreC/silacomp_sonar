@@ -55,7 +55,7 @@ export const MatchTable: React.FC<MatchTableProps> = ({
             border: '1px solid #CBD5E1',
             color: '#000000',
             padding: '6px 12px',
-            borderRadius: '0px',
+            borderRadius: 'var(--radius-md)',
             fontSize: '12px',
             width: '240px'
           }}
@@ -77,8 +77,8 @@ export const MatchTable: React.FC<MatchTableProps> = ({
           style={{
             fontSize: '11px',
             padding: '5px 12px',
-            background: filter === 'MATCH' ? '#10b981' : 'var(--bg-primary)',
-            color: filter === 'MATCH' ? '#000000' : '#10b981',
+            background: filter === 'MATCH' ? 'var(--match-color)' : 'var(--bg-primary)',
+            color: filter === 'MATCH' ? '#000000' : 'var(--match-color)',
             border: '1px solid #10b981',
             fontWeight: 600
           }}
@@ -105,8 +105,8 @@ export const MatchTable: React.FC<MatchTableProps> = ({
           style={{
             fontSize: '11px',
             padding: '5px 12px',
-            background: filter === 'UNCERTAIN' ? '#94a3b8' : 'var(--bg-primary)',
-            color: filter === 'UNCERTAIN' ? '#000000' : '#94a3b8',
+            background: filter === 'UNCERTAIN' ? 'var(--text-muted)' : 'var(--bg-primary)',
+            color: filter === 'UNCERTAIN' ? '#000000' : 'var(--text-muted)',
             border: '1px solid #94a3b8',
             fontWeight: 600
           }}
@@ -200,7 +200,7 @@ export const MatchTable: React.FC<MatchTableProps> = ({
                               fontSize: '10px',
                               background: 'var(--bg-primary)',
                               padding: '2px 5px',
-                              borderRadius: '0px',
+                              borderRadius: 'var(--radius-md)',
                               border: '1px solid var(--border-color)',
                               color: 'var(--text-secondary)'
                             }}
@@ -217,7 +217,7 @@ export const MatchTable: React.FC<MatchTableProps> = ({
                     </td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>
                       {humanDecision ? (
-                        <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600 }}>
+                        <span style={{ fontSize: '11px', color: 'var(--match-color)', fontWeight: 600 }}>
                           ✓ {CLASSIFICATIONS_ES[humanDecision as MatchClassification]?.label || humanDecision}
                         </span>
                       ) : (
